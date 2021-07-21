@@ -65,4 +65,4 @@ class brain_CT_scan(Dataset):
         image1 = self.transform(image)
         image2 = self.transform(image)
 
-        return [image1, image2]
+        return (image1, image2), 0
