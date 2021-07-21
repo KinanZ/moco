@@ -346,8 +346,8 @@ def train(train_loader, model, criterion, optimizer, epoch, args):
         print('losses: ', losses)
         top1.update(acc1[0], images[0].size(0))
         print('top1', top1)
-        top5.update(acc5[0], images[0].size(0))
-        # print('top5', top5.shape)
+        # top5.update(acc5[0], images[0].size(0))
+        print('top5', top5)
 
         # compute gradient and do SGD step
         optimizer.zero_grad()
