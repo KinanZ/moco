@@ -342,7 +342,9 @@ def train(train_loader, model, criterion, optimizer, epoch, args):
         # acc1/acc5 are (K+1)-way contrast classifier accuracy
         # measure accuracy and record loss
         acc1, acc5 = accuracy(output, target, topk=(1, 5))
+        print('accuracy done')
         losses.update(loss.item(), images[0].size(0))
+        print('loss done')
         top1.update(acc1[0], images[0].size(0))
         top5.update(acc5[0], images[0].size(0))
 
@@ -385,7 +387,7 @@ class AverageMeter(object):
         self.avg = self.sum / self.count
 
     def __str__(self):
-        fmtstr = '{name} {val' + str(self.fmt) + '} ({avg' + str(self.fmt) + '})'
+        fmtstr = '{name} {val' + self.fmt + '} ({avg' + self.fmt + '})'
         return fmtstr.format(**self.__dict__)
 
 
