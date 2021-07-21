@@ -23,7 +23,10 @@ class brain_CT_scan(Dataset):
         with open(json_file) as f_obj:
             self.dataset_annotations = json.load(f_obj)["questions"]
         self.root_dir = root_dir
+
+        assert transform is not None
         self.transform = transform
+
         self.num_channels = num_channels
 
     def __len__(self):
@@ -62,4 +65,4 @@ class brain_CT_scan(Dataset):
         image1 = self.transform(image)
         image2 = self.transform(image)
 
-        return (image1, image2), 0
+        return [image1, image2]
