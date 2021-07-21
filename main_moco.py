@@ -9,6 +9,9 @@ import shutil
 import time
 import warnings
 
+import logging
+import sys
+
 import torch
 import torch.nn as nn
 import torch.nn.parallel
@@ -19,24 +22,32 @@ import torch.multiprocessing as mp
 import torch.utils.data
 import torch.utils.data.distributed
 import torchvision.transforms as transforms
-import torchvision.datasets as datasets
 import torchvision.models as models
 
 import moco.loader
 import moco.builder
+from CT_scans_dataset import brain_CT_scan
 
 model_names = sorted(name for name in models.__dict__
     if name.islower() and not name.startswith("__")
     and callable(models.__dict__[name]))
 
-parser = argparse.ArgumentParser(description='PyTorch ImageNet Training')
-parser.add_argument('data', metavar='DIR',
-                    help='path to dataset')
+parser = argparse.ArgumentParser(description='PyTorch MoCo Brain CT Scans Training')
+parser.add_argument('--exp', default='test_1',
+                    help='experiment_name')
+parser.add_argument('--data', default='/misc/lmbraid19/argusm/CLUSTER/multimed/NSEG2015_2/train.json',
+                    help='path to json file with dataset information')
+parser.add_argument('--images', default='/misc/lmbraid19/argusm/CLUSTER/multimed/NSEG2015_2/JPEGImages/',
+                    help='path to json file with dataset information')
+parser.add_argument('--output_dir', default='/misc/student/alzouabk/Thesis/self_supervised_pretraining/moco/outputs',
+                    help='path to output directory')
 parser.add_argument('-a', '--arch', metavar='ARCH', default='resnet50',
                     choices=model_names,
                     help='model architecture: ' +
                         ' | '.join(model_names) +
                         ' (default: resnet50)')
+parser.add_argument('--channel_num', default='1',
+                    help='1 or 3, if 3 then we stack the pre and next slices to the current slice as 3-channel image')
 parser.add_argument('-j', '--workers', default=32, type=int, metavar='N',
                     help='number of data loading workers (default: 32)')
 parser.add_argument('--epochs', default=200, type=int, metavar='N',
@@ -99,7 +110,25 @@ parser.add_argument('--cos', action='store_true',
 
 
 def main():
+    # starting time:
+    start_time = time.time()
+
     args = parser.parse_args()
+
+    exp_output = os.path.join(args.output_dir, args.exp)
+    if not os.path.exists(exp_output):
+        os.makedirs(exp_output)
+    else:
+        logging.info('experiment already exist')
+
+    # logging config
+    logging.basicConfig(level=logging.INFO,
+                        filename=os.path.join(exp_output, '/out.log'),
+                        format='%(asctime)s :: %(levelname)s :: %(message)s')
+
+    # save command line args
+    with open('commandline_args.txt', 'w') as f:
+        f.write('\n'.join(sys.argv[1:]))
 
     if args.seed is not None:
         random.seed(args.seed)
@@ -127,13 +156,20 @@ def main():
         args.world_size = ngpus_per_node * args.world_size
         # Use torch.multiprocessing.spawn to launch distributed processes: the
         # main_worker process function
-        mp.spawn(main_worker, nprocs=ngpus_per_node, args=(ngpus_per_node, args))
+        mp.spawn(main_worker, nprocs=ngpus_per_node, args=(ngpus_per_node, args, exp_output))
     else:
         # Simply call main_worker function
-        main_worker(args.gpu, ngpus_per_node, args)
+        main_worker(args.gpu, ngpus_per_node, args, exp_output)
+
+    # time at the end and print it:
+    end_time = time.time()
+    hours, rem = divmod(end_time - start_time, 3600)
+    minutes, seconds = divmod(rem, 60)
+    logging.info("Training is done!, Execution time was: ")
+    logging.info("{:0>2}:{:0>2}:{:05.2f}".format(int(hours), int(minutes), seconds))
 
 
-def main_worker(gpu, ngpus_per_node, args):
+def main_worker(gpu, ngpus_per_node, args, exp_output):
     args.gpu = gpu
 
     # suppress printing if not master
@@ -143,7 +179,7 @@ def main_worker(gpu, ngpus_per_node, args):
         builtins.print = print_pass
 
     if args.gpu is not None:
-        print("Use GPU: {} for training".format(args.gpu))
+        logging.info("Use GPU: {} for training".format(args.gpu))
 
     if args.distributed:
         if args.dist_url == "env://" and args.rank == -1:
@@ -155,11 +191,11 @@ def main_worker(gpu, ngpus_per_node, args):
         dist.init_process_group(backend=args.dist_backend, init_method=args.dist_url,
                                 world_size=args.world_size, rank=args.rank)
     # create model
-    print("=> creating model '{}'".format(args.arch))
+    logging.info("=> creating model '{}'".format(args.arch))
     model = moco.builder.MoCo(
         models.__dict__[args.arch],
-        args.moco_dim, args.moco_k, args.moco_m, args.moco_t, args.mlp)
-    print(model)
+        args.moco_dim, args.moco_k, args.moco_m, args.moco_t, args.mlp, args.channel_num)
+    logging.info(model)
 
     if args.distributed:
         # For multiprocessing distributed, DistributedDataParallel constructor
@@ -199,7 +235,7 @@ def main_worker(gpu, ngpus_per_node, args):
     # optionally resume from a checkpoint
     if args.resume:
         if os.path.isfile(args.resume):
-            print("=> loading checkpoint '{}'".format(args.resume))
+            logging.info("=> loading checkpoint '{}'".format(args.resume))
             if args.gpu is None:
                 checkpoint = torch.load(args.resume)
             else:
@@ -209,44 +245,47 @@ def main_worker(gpu, ngpus_per_node, args):
             args.start_epoch = checkpoint['epoch']
             model.load_state_dict(checkpoint['state_dict'])
             optimizer.load_state_dict(checkpoint['optimizer'])
-            print("=> loaded checkpoint '{}' (epoch {})"
+            logging.info("=> loaded checkpoint '{}' (epoch {})"
                   .format(args.resume, checkpoint['epoch']))
         else:
-            print("=> no checkpoint found at '{}'".format(args.resume))
+            logging.info("=> no checkpoint found at '{}'".format(args.resume))
 
     cudnn.benchmark = True
 
     # Data loading code
-    traindir = os.path.join(args.data, 'train')
-    normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406],
-                                     std=[0.229, 0.224, 0.225])
+    if args.channel_num == 3:
+        normalize = transforms.Normalize(mean=[0.184, 0.184, 0.184],
+                                         std=[0.055, 0.055, 0.055])
+    else:
+        normalize = transforms.Normalize(mean=[0.184], std=[0.055])
+
     if args.aug_plus:
         # MoCo v2's aug: similar to SimCLR https://arxiv.org/abs/2002.05709
         augmentation = [
             transforms.RandomResizedCrop(224, scale=(0.2, 1.)),
-            transforms.RandomApply([
-                transforms.ColorJitter(0.4, 0.4, 0.4, 0.1)  # not strengthened
-            ], p=0.8),
-            transforms.RandomGrayscale(p=0.2),
+            # transforms.RandomApply([
+            #     transforms.ColorJitter(0.4, 0.4, 0.4, 0.1)  # not strengthened
+            # ], p=0.8),
+            # transforms.RandomGrayscale(p=0.2),
             transforms.RandomApply([moco.loader.GaussianBlur([.1, 2.])], p=0.5),
             transforms.RandomHorizontalFlip(),
-            transforms.ToTensor(),
+            #transforms.ToTensor(),
             normalize
         ]
     else:
         # MoCo v1's aug: the same as InstDisc https://arxiv.org/abs/1805.01978
         augmentation = [
             transforms.RandomResizedCrop(224, scale=(0.2, 1.)),
-            transforms.RandomGrayscale(p=0.2),
-            transforms.ColorJitter(0.4, 0.4, 0.4, 0.4),
+            # transforms.RandomGrayscale(p=0.2),
+            # transforms.ColorJitter(0.4, 0.4, 0.4, 0.4),
             transforms.RandomHorizontalFlip(),
-            transforms.ToTensor(),
+            # transforms.ToTensor(),
             normalize
         ]
 
-    train_dataset = datasets.ImageFolder(
-        traindir,
-        moco.loader.TwoCropsTransform(transforms.Compose(augmentation)))
+    train_dataset = brain_CT_scan(args.data, args.images,
+                                  moco.loader.TwoCropsTransform(transforms.Compose(augmentation)),
+                                  args.channel_num)
 
     if args.distributed:
         train_sampler = torch.utils.data.distributed.DistributedSampler(train_dataset)
@@ -271,8 +310,8 @@ def main_worker(gpu, ngpus_per_node, args):
                 'epoch': epoch + 1,
                 'arch': args.arch,
                 'state_dict': model.state_dict(),
-                'optimizer' : optimizer.state_dict(),
-            }, is_best=False, filename='checkpoint_{:04d}.pth.tar'.format(epoch))
+                'optimizer': optimizer.state_dict(),
+            }, is_best=False, filename=os.path.join(exp_output, '/checkpoint_{:04d}.pth.tar'.format(epoch)))
 
 
 def train(train_loader, model, criterion, optimizer, epoch, args):
@@ -361,7 +400,7 @@ class ProgressMeter(object):
     def display(self, batch):
         entries = [self.prefix + self.batch_fmtstr.format(batch)]
         entries += [str(meter) for meter in self.meters]
-        print('\t'.join(entries))
+        logging.info('\t'.join(entries))
 
     def _get_batch_fmtstr(self, num_batches):
         num_digits = len(str(num_batches // 1))
