@@ -429,6 +429,7 @@ def accuracy(output, target, topk=(1,)):
         correct = pred.eq(target.view(1, -1).expand_as(pred))
         print('pred_shape', pred.shape)
         print('correct_shape: ', correct.shape)
+        print('target_shape: ', target.shape)
 
         res = []
         for k in topk:
