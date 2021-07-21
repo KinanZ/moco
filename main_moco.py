@@ -39,14 +39,14 @@ parser.add_argument('--data', default='/misc/lmbraid19/argusm/CLUSTER/multimed/N
                     help='path to json file with dataset information')
 parser.add_argument('--images', default='/misc/lmbraid19/argusm/CLUSTER/multimed/NSEG2015_2/JPEGImages/',
                     help='path to json file with dataset information')
-parser.add_argument('--output_dir', default='/misc/student/alzouabk/Thesis/self_supervised_pretraining/moco/outputs',
+parser.add_argument('--output_dir', default='/misc/student/alzouabk/Thesis/self_supervised_pretraining/moco/outputs/',
                     help='path to output directory')
 parser.add_argument('-a', '--arch', metavar='ARCH', default='resnet50',
                     choices=model_names,
                     help='model architecture: ' +
                         ' | '.join(model_names) +
                         ' (default: resnet50)')
-parser.add_argument('--channel_num', default='1',
+parser.add_argument('--channel_num', default=1, type=int,
                     help='1 or 3, if 3 then we stack the pre and next slices to the current slice as 3-channel image')
 parser.add_argument('-j', '--workers', default=32, type=int, metavar='N',
                     help='number of data loading workers (default: 32)')
@@ -118,8 +118,6 @@ def main():
     exp_output = os.path.join(args.output_dir, args.exp)
     if not os.path.exists(exp_output):
         os.makedirs(exp_output)
-    else:
-        logging.info('experiment already exist')
 
     # logging config
     logging.basicConfig(level=logging.INFO,
@@ -283,9 +281,9 @@ def main_worker(gpu, ngpus_per_node, args, exp_output):
             normalize
         ]
 
-    train_dataset = brain_CT_scan(args.data, args.images,
-                                  moco.loader.TwoCropsTransform(transforms.Compose(augmentation)),
-                                  args.channel_num)
+    train_dataset = brain_CT_scan(json_file=args.data, root_dir=args.images,
+                                  transform=moco.loader.TwoCropsTransform(transforms.Compose(augmentation)),
+                                  num_channels=args.channel_num)
 
     if args.distributed:
         train_sampler = torch.utils.data.distributed.DistributedSampler(train_dataset)
