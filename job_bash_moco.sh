@@ -1,9 +1,9 @@
 #PBS -N moco_test_1
 #PBS -S /bin/bash
-#PBS -l nodes=1:ppn=61:gpus=2:nvidiaMin12GB,mem=32gb,walltime=24:00:00
+#PBS -l nodes=1:ppn=8:gpus=2:nvidiaMin11GB,mem=16gb,walltime=24:00:00
 #PBS -j oe
 #PBS -q student
-#PBS -o /misc/student/alzouabk/Thesis/supervised_multi_label_classification/outputs/
+#PBS -o /misc/student/alzouabk/Thesis/self_supervised_pretraining/moco/outputs/
 
 
 homePath='/misc/student/alzouabk/miniconda3'
@@ -19,6 +19,6 @@ python3 /misc/student/alzouabk/Thesis/self_supervised_pretraining/moco/main_moco
   -p 1 \
   -a resnet50 \
   --lr 0.03 \
-  --batch-size 36 \
+  --batch-size 16 \
   --dist-url 'tcp://localhost:10001' --multiprocessing-distributed --world-size 1 --rank 0 \
 

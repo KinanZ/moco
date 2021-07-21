@@ -123,7 +123,7 @@ def main():
 
     # logging config
     logging.basicConfig(level=logging.INFO,
-                        filename=os.path.join(exp_output, '/out.log'),
+                        filename=os.path.join(exp_output, 'out.log'),
                         format='%(asctime)s :: %(levelname)s :: %(message)s')
 
     # save command line args
