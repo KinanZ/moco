@@ -385,7 +385,7 @@ class AverageMeter(object):
         self.avg = self.sum / self.count
 
     def __str__(self):
-        fmtstr = '{name} {val' + self.fmt + '} ({avg' + self.fmt + '})'
+        fmtstr = '{name} {val' + str(self.fmt) + '} ({avg' + str(self.fmt) + '})'
         return fmtstr.format(**self.__dict__)
 
 
