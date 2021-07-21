@@ -349,7 +349,7 @@ def train(train_loader, model, criterion, optimizer, epoch, args):
         print('acc1 updated')
         top5.update(acc5[0], images[0].size(0))
         print('acc5 updated')
-        
+
         # compute gradient and do SGD step
         optimizer.zero_grad()
         loss.backward()
@@ -357,6 +357,7 @@ def train(train_loader, model, criterion, optimizer, epoch, args):
 
         # measure elapsed time
         batch_time.update(time.time() - end)
+        print('time updated')
         end = time.time()
 
         if i % args.print_freq == 0:
