@@ -342,13 +342,12 @@ def train(train_loader, model, criterion, optimizer, epoch, args):
         # acc1/acc5 are (K+1)-way contrast classifier accuracy
         # measure accuracy and record loss
         acc1, acc5 = accuracy(output, target, topk=(1, 5))
-        print('accuracy done')
         losses.update(loss.item(), images[0].size(0))
-        print('loss done')
+        print('losses: ', losses)
         top1.update(acc1[0], images[0].size(0))
-        print('acc1 updated')
+        print('top1', top1)
         top5.update(acc5[0], images[0].size(0))
-        print('acc5 updated')
+        print('top5', top5)
 
         # compute gradient and do SGD step
         optimizer.zero_grad()
@@ -357,7 +356,7 @@ def train(train_loader, model, criterion, optimizer, epoch, args):
 
         # measure elapsed time
         batch_time.update(time.time() - end)
-        print('time updated')
+        print('batch_time', batch_time)
         end = time.time()
 
         if i % args.print_freq == 0:
@@ -402,6 +401,7 @@ class ProgressMeter(object):
 
     def display(self, batch):
         entries = [self.prefix + self.batch_fmtstr.format(batch)]
+        print('entries', entries)
         entries += [str(meter) for meter in self.meters]
         logging.info('\t'.join(entries))
 
