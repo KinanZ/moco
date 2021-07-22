@@ -1,4 +1,4 @@
-#PBS -N moco_test_1
+#PBS -N moco_test_2
 #PBS -S /bin/bash
 #PBS -l nodes=1:ppn=8:gpus=2:nvidiaMin11GB,mem=16gb,walltime=24:00:00
 #PBS -j oe
@@ -18,6 +18,7 @@ python3 /misc/student/alzouabk/Thesis/self_supervised_pretraining/moco/main_moco
   --epochs 2 \
   -p 1 \
   -a resnet50 \
+  --channel_num 3 \
   --lr 0.03 \
   --batch-size 16 \
   --dist-url 'tcp://localhost:10001' --multiprocessing-distributed --world-size 1 --rank 0 \
