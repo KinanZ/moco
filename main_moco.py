@@ -120,7 +120,7 @@ def main():
         os.makedirs(exp_output)
 
     # logging config
-    logging.basicConfig(level=logging.INFO,
+    logging.basicConfig(level=logging.DEBUG,
                         filename=os.path.join(exp_output, 'out.log'),
                         format='%(asctime)s :: %(levelname)s :: %(message)s')
 
@@ -345,6 +345,9 @@ def train(train_loader, model, criterion, optimizer, epoch, args):
         losses.update(loss.item(), images[0].size(0))
 
         top1.update(acc1[0], images[0].size(0))
+        print('acc5_type: ', type(acc5))
+        print('acc5_shape: ', acc5.shape)
+        print('acc5: ', acc5)
         # top5.update(acc5[0], images[0].size(0))
 
         # compute gradient and do SGD step
@@ -433,6 +436,7 @@ def accuracy(output, target, topk=(1,)):
         for k in topk:
             correct_k = correct[:k].squeeze().float().sum(0, keepdim=True)
             res.append(correct_k.mul_(100.0 / batch_size))
+        print('res: ', res)
         return res
 
 
