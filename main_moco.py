@@ -344,14 +344,8 @@ def train(train_loader, model, criterion, optimizer, epoch, args):
         acc1, acc5 = accuracy(output, target, topk=(1, 5))
         losses.update(loss.item(), images[0].size(0))
 
-        print('acc1_type: ', type(acc1))
-        print('acc1_shape: ', acc1.shape)
-        print('acc1: ', acc1)
         top1.update(acc1[0], images[0].size(0))
-        print('acc5_type: ', type(acc5))
-        print('acc5_shape: ', acc5.shape)
-        print('acc5: ', acc5)
-        top5.update(acc5[0], images[0].size(0))
+        top5.update(acc5.sqweeze()[0], images[0].size(0))
 
         # compute gradient and do SGD step
         optimizer.zero_grad()
@@ -439,7 +433,6 @@ def accuracy(output, target, topk=(1,)):
         for k in topk:
             correct_k = correct[:k].squeeze().float().sum(0, keepdim=True)
             res.append(correct_k.mul_(100.0 / batch_size))
-        print('res: ', res)
         return res
 
 
