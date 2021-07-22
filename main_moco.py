@@ -344,6 +344,9 @@ def train(train_loader, model, criterion, optimizer, epoch, args):
         acc1, acc5 = accuracy(output, target, topk=(1, 5))
         losses.update(loss.item(), images[0].size(0))
 
+        print('acc1_type: ', type(acc1))
+        print('acc1_shape: ', acc1.shape)
+        print('acc1: ', acc1)
         top1.update(acc1[0], images[0].size(0))
         print('acc5_type: ', type(acc5))
         print('acc5_shape: ', acc5.shape)
