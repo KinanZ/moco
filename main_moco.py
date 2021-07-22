@@ -123,6 +123,7 @@ def main():
     logging.basicConfig(level=logging.DEBUG,
                         filename=os.path.join(exp_output, 'out.log'),
                         format='%(asctime)s :: %(levelname)s :: %(message)s')
+    logger = logging.getLogger()
 
     # save command line args
     with open('commandline_args.txt', 'w') as f:
@@ -147,7 +148,7 @@ def main():
 
     args.distributed = args.world_size > 1 or args.multiprocessing_distributed
 
-    logging.info("Training is starting: ")
+    logger.info("Training is starting: ")
 
     ngpus_per_node = torch.cuda.device_count()
     if args.multiprocessing_distributed:
@@ -165,12 +166,13 @@ def main():
     end_time = time.time()
     hours, rem = divmod(end_time - start_time, 3600)
     minutes, seconds = divmod(rem, 60)
-    logging.info("Training is done!, Execution time was: ")
-    logging.info("{:0>2}:{:0>2}:{:05.2f}".format(int(hours), int(minutes), seconds))
+    logger.info("Training is done!, Execution time was: ")
+    logger.info("{:0>2}:{:0>2}:{:05.2f}".format(int(hours), int(minutes), seconds))
 
 
 def main_worker(gpu, ngpus_per_node, args, exp_output):
     args.gpu = gpu
+    logger = logging.getLogger()
 
     # suppress printing if not master
     if args.multiprocessing_distributed and args.gpu != 0:
@@ -179,7 +181,7 @@ def main_worker(gpu, ngpus_per_node, args, exp_output):
         builtins.print = print_pass
 
     if args.gpu is not None:
-        logging.info("Use GPU: {} for training".format(args.gpu))
+        logger.info("Use GPU: {} for training".format(args.gpu))
 
     if args.distributed:
         if args.dist_url == "env://" and args.rank == -1:
@@ -191,11 +193,11 @@ def main_worker(gpu, ngpus_per_node, args, exp_output):
         dist.init_process_group(backend=args.dist_backend, init_method=args.dist_url,
                                 world_size=args.world_size, rank=args.rank)
     # create model
-    logging.info("=> creating model '{}'".format(args.arch))
+    logger.info("=> creating model '{}'".format(args.arch))
     model = moco.builder.MoCo(
         models.__dict__[args.arch],
         args.moco_dim, args.moco_k, args.moco_m, args.moco_t, args.mlp, args.channel_num)
-    logging.info(model)
+    logger.info(model)
 
     if args.distributed:
         # For multiprocessing distributed, DistributedDataParallel constructor
@@ -235,7 +237,7 @@ def main_worker(gpu, ngpus_per_node, args, exp_output):
     # optionally resume from a checkpoint
     if args.resume:
         if os.path.isfile(args.resume):
-            logging.info("=> loading checkpoint '{}'".format(args.resume))
+            logger.info("=> loading checkpoint '{}'".format(args.resume))
             if args.gpu is None:
                 checkpoint = torch.load(args.resume)
             else:
@@ -245,10 +247,10 @@ def main_worker(gpu, ngpus_per_node, args, exp_output):
             args.start_epoch = checkpoint['epoch']
             model.load_state_dict(checkpoint['state_dict'])
             optimizer.load_state_dict(checkpoint['optimizer'])
-            logging.info("=> loaded checkpoint '{}' (epoch {})"
+            logger.info("=> loaded checkpoint '{}' (epoch {})"
                   .format(args.resume, checkpoint['epoch']))
         else:
-            logging.info("=> no checkpoint found at '{}'".format(args.resume))
+            logger.info("=> no checkpoint found at '{}'".format(args.resume))
 
     cudnn.benchmark = True
 
