@@ -348,7 +348,7 @@ def train(train_loader, model, criterion, optimizer, epoch, args):
         print('acc5_type: ', type(acc5))
         print('acc5_shape: ', acc5.shape)
         print('acc5: ', acc5)
-        # top5.update(acc5[0], images[0].size(0))
+        top5.update(acc5[0], images[0].size(0))
 
         # compute gradient and do SGD step
         optimizer.zero_grad()
