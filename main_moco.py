@@ -147,6 +147,8 @@ def main():
 
     args.distributed = args.world_size > 1 or args.multiprocessing_distributed
 
+    logging.info("Training is starting: ")
+
     ngpus_per_node = torch.cuda.device_count()
     if args.multiprocessing_distributed:
         # Since we have ngpus_per_node processes per node, the total world_size
