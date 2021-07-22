@@ -15,12 +15,12 @@ nvidia-smi --query-accounted-apps="pid,gpu_util,mem_util,max_memory_usage,time" 
 echo 'Training Should start'
 python3 /misc/student/alzouabk/Thesis/self_supervised_pretraining/moco/main_moco.py \
   --exp '1c_v2' \
-  --epochs 200 \
+  --epochs 2 \
   --print-freq 10 \
   --arch resnet50 \
   --channel_num 1 \
   --lr 0.03 \
-  --batch-size 36 \
+  --batch-size 64 \
   --dist-url 'tcp://localhost:10001' --multiprocessing-distributed --world-size 1 --rank 0 \
   --mlp \
   --moco-t 0.2 \
