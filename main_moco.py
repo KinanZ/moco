@@ -119,7 +119,7 @@ def main():
         os.makedirs(exp_output)
 
     # save command line args
-    with open('commandline_args.txt', 'w') as f:
+    with open(os.path.join(exp_output, 'commandline_args.txt'), 'w') as f:
         f.write('\n'.join(sys.argv[1:]))
 
     if args.seed is not None:
