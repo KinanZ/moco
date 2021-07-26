@@ -25,4 +25,5 @@ python3 /misc/student/alzouabk/Thesis/self_supervised_pretraining/moco/main_moco
   --mlp \
   --moco-t 0.2 \
   --aug-plus --cos \
+  --workers 4 \
 

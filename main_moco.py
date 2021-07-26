@@ -256,12 +256,12 @@ def main_worker(gpu, ngpus_per_node, args, exp_output):
     if args.aug_plus:
         # MoCo v2's aug: similar to SimCLR https://arxiv.org/abs/2002.05709
         augmentation = [
-            transforms.RandomResizedCrop(224, scale=(0.2, 1.)),
+            transforms.RandomResizedCrop(512, scale=(0.6, 1.)),
             # transforms.RandomApply([
             #     transforms.ColorJitter(0.4, 0.4, 0.4, 0.1)  # not strengthened
             # ], p=0.8),
             # transforms.RandomGrayscale(p=0.2),
-            transforms.RandomApply([transforms.GaussianBlur(kernel_size=[5, 5], sigma=[.1, 2.])], p=0.5),
+            #transforms.RandomApply([transforms.GaussianBlur(kernel_size=[5, 5], sigma=[.1, 2.])], p=0.5),
             transforms.RandomHorizontalFlip(),
             #transforms.ToTensor(),
             normalize
@@ -269,7 +269,7 @@ def main_worker(gpu, ngpus_per_node, args, exp_output):
     else:
         # MoCo v1's aug: the same as InstDisc https://arxiv.org/abs/1805.01978
         augmentation = [
-            transforms.RandomResizedCrop(224, scale=(0.2, 1.)),
+            transforms.RandomResizedCrop(512, scale=(0.6, 1.)),
             # transforms.RandomGrayscale(p=0.2),
             # transforms.ColorJitter(0.4, 0.4, 0.4, 0.4),
             transforms.RandomHorizontalFlip(),
@@ -298,14 +298,15 @@ def main_worker(gpu, ngpus_per_node, args, exp_output):
         # train for one epoch
         train(train_loader, model, criterion, optimizer, epoch, args)
 
-        if not args.multiprocessing_distributed or (args.multiprocessing_distributed
-                and args.rank % ngpus_per_node == 0):
-            save_checkpoint({
-                'epoch': epoch + 1,
-                'arch': args.arch,
-                'state_dict': model.state_dict(),
-                'optimizer': optimizer.state_dict(),
-            }, is_best=False, filename=os.path.join(exp_output, 'checkpoint_{:04d}.pth.tar'.format(epoch)))
+        if epoch == args.epochs - 1:
+            if not args.multiprocessing_distributed or (args.multiprocessing_distributed
+                    and args.rank % ngpus_per_node == 0):
+                save_checkpoint({
+                    'epoch': epoch + 1,
+                    'arch': args.arch,
+                    'state_dict': model.state_dict(),
+                    'optimizer': optimizer.state_dict(),
+                }, is_best=False, filename=os.path.join(exp_output, 'checkpoint_{:04d}.pth.tar'.format(epoch)))
 
 
 def train(train_loader, model, criterion, optimizer, epoch, args):
@@ -341,7 +342,7 @@ def train(train_loader, model, criterion, optimizer, epoch, args):
         losses.update(loss.item(), images[0].size(0))
 
         top1.update(acc1[0], images[0].size(0))
-        top5.update(acc5.squeeze()[0], images[0].size(0))
+        top5.update(acc5[0], images[0].size(0))
 
         # compute gradient and do SGD step
         optimizer.zero_grad()
@@ -427,7 +428,7 @@ def accuracy(output, target, topk=(1,)):
 
         res = []
         for k in topk:
-            correct_k = correct[:k].squeeze().float().sum(0, keepdim=True)
+            correct_k = correct[:k].reshape(-1).float().sum(0, keepdim=True)
             res.append(correct_k.mul_(100.0 / batch_size))
         return res
 
