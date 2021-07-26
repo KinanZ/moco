@@ -151,9 +151,11 @@ def main():
         # Use torch.multiprocessing.spawn to launch distributed processes: the
         # main_worker process function
         mp.spawn(main_worker, nprocs=ngpus_per_node, args=(ngpus_per_node, args, exp_output))
+        print('its multiprocesssssssssssssinggg')
     else:
         # Simply call main_worker function
         main_worker(args.gpu, ngpus_per_node, args, exp_output)
+        print('its nooooottttttttttttt')
 
     # time at the end and print it:
     end_time = time.time()
@@ -184,6 +186,10 @@ def main_worker(gpu, ngpus_per_node, args, exp_output):
             args.rank = args.rank * ngpus_per_node + gpu
         dist.init_process_group(backend=args.dist_backend, init_method=args.dist_url,
                                 world_size=args.world_size, rank=args.rank)
+
+    if torch.cuda.device_count() > 1:
+        print("Let's use", torch.cuda.device_count(), "GPUs!")
+
     # create model
     print("=> creating model '{}'".format(args.arch))
     model = moco.builder.MoCo(
