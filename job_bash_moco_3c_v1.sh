@@ -22,5 +22,5 @@ python3 /misc/student/alzouabk/Thesis/self_supervised_pretraining/moco/main_moco
   --lr 0.03 \
   --batch-size 64 \
   --dist-url 'tcp://localhost:10001' --multiprocessing-distributed --world-size 1 --rank 0 \
-  --workers 4 \
+  --workers 8 \
 
