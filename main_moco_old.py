@@ -104,10 +104,12 @@ parser.add_argument('--moco-t', default=0.07, type=float,
 # options for moco v2
 parser.add_argument('--mlp', action='store_true',
                     help='use mlp head')
-parser.add_argument('--aug-plus', action='store_true',
-                    help='use moco v2 data augmentation')
 parser.add_argument('--cos', action='store_true',
                     help='use cosine lr schedule')
+
+# Use Gaussian blur probability in Augmentations
+parser.add_argument('--gbp', default=0.0, type=float,
+                    help='probability of using Gaussian blur')
 
 
 def main():
@@ -153,11 +155,9 @@ def main():
         # Use torch.multiprocessing.spawn to launch distributed processes: the
         # main_worker process function
         mp.spawn(main_worker, nprocs=ngpus_per_node, args=(ngpus_per_node, args, exp_output))
-        print('its multiprocesssssssssssssinggg')
     else:
         # Simply call main_worker function
         main_worker(args.gpu, ngpus_per_node, args, exp_output)
-        print('its nooooottttttttttttt')
 
     # time at the end and print it:
     end_time = time.time()
@@ -261,29 +261,17 @@ def main_worker(gpu, ngpus_per_node, args, exp_output):
     else:
         normalize = transforms.Normalize(mean=[0.184], std=[0.055])
 
-    if args.aug_plus:
-        # MoCo v2's aug: similar to SimCLR https://arxiv.org/abs/2002.05709
-        augmentation = [
-            transforms.RandomResizedCrop(512, scale=(0.6, 1.)),
-            # transforms.RandomApply([
-            #     transforms.ColorJitter(0.4, 0.4, 0.4, 0.1)  # not strengthened
-            # ], p=0.8),
-            # transforms.RandomGrayscale(p=0.2),
-            #transforms.RandomApply([transforms.GaussianBlur(kernel_size=[5, 5], sigma=[.1, 2.])], p=0.5),
-            transforms.RandomHorizontalFlip(),
-            #transforms.ToTensor(),
-            normalize
-        ]
-    else:
-        # MoCo v1's aug: the same as InstDisc https://arxiv.org/abs/1805.01978
-        augmentation = [
-            transforms.RandomResizedCrop(512, scale=(0.6, 1.)),
-            # transforms.RandomGrayscale(p=0.2),
-            # transforms.ColorJitter(0.4, 0.4, 0.4, 0.4),
-            transforms.RandomHorizontalFlip(),
-            # transforms.ToTensor(),
-            normalize
-        ]
+    augmentation = [
+        transforms.RandomResizedCrop(512, scale=(0.6, 1.)),
+        # transforms.RandomApply([
+        #     transforms.ColorJitter(0.4, 0.4, 0.4, 0.1)  # not strengthened
+        # ], p=0.8),
+        # transforms.RandomGrayscale(p=0.2),
+        #transforms.RandomApply([transforms.GaussianBlur(kernel_size=[5, 5], sigma=[.1, 2.])], p=0.5),
+        transforms.RandomHorizontalFlip(),
+        #transforms.ToTensor(),
+        normalize
+    ]
 
     train_dataset = brain_CT_scan(json_file=args.data, root_dir=args.images,
                                   transform=moco.loader.TwoCropsTransform(transforms.Compose(augmentation)),
