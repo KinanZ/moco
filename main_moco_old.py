@@ -10,6 +10,8 @@ import time
 import warnings
 
 import sys
+import numpy as np
+import elasticdeform.torch as etorch
 
 import torch
 import torch.nn as nn

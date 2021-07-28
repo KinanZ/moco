@@ -15,8 +15,8 @@ nvidia-smi --query-accounted-apps="pid,gpu_util,mem_util,max_memory_usage,time" 
 echo 'Training Should start'
 python3 /misc/student/alzouabk/Thesis/self_supervised_pretraining/moco/main_moco_old.py \
   --exp 'test' \
-  --epochs 10 \
-  --print-freq 2 \
+  --epochs 2 \
+  --print-freq 1 \
   --arch resnet50 \
   --channel_num 3 \
   --lr 0.03 \
