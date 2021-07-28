@@ -1,6 +1,9 @@
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
 from PIL import ImageFilter
 import random
+import torch
+import numpy as np
+import elasticdeform.torch as etorch
 
 
 class TwoCropsTransform:
@@ -25,3 +28,24 @@ class GaussianBlur(object):
         sigma = random.uniform(self.sigma[0], self.sigma[1])
         x = x.filter(ImageFilter.GaussianBlur(radius=sigma))
         return x
+
+
+class ElasticDeform(object):
+    """Elastic Deformation helper class"""
+
+    def __init__(self, control_points_num=3, sigma=15, axis=(1, 2)):
+        self.control_points_num = control_points_num
+        self.sigma = sigma
+        self.axis = axis
+
+    def __call__(self, x):
+        # generate a deformation grid
+        displacement = np.random.randn(2, self.control_points_num, self.control_points_num) * self.sigma
+        # construct PyTorch input and top gradient
+        displacement = torch.tensor(displacement)
+        # elastic deformation
+        ed_x = etorch.deform_grid(x.squeeze(), displacement, prefilter=True, axis=self.axis)
+        if len(ed_x.shape) == 2:
+            return ed_x.unsqueeze(dim=0)
+        else:
+            return ed_x
