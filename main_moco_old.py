@@ -428,6 +428,13 @@ def accuracy(output, target, topk=(1,)):
         return res
 
 
+def correct_dim(x):
+    if len(x.shape) == 2:
+        return x.unsqueeze(dim=0)
+    else:
+        return x
+
+
 def elastic_deform(x, control_points_num=3, sigma=20, axis=(1, 2)):
     # generate a deformation grid
     displacement = np.random.randn(2, control_points_num, control_points_num) * sigma
@@ -436,13 +443,6 @@ def elastic_deform(x, control_points_num=3, sigma=20, axis=(1, 2)):
     # elastic deformation
     ed_x = etorch.deform_grid(x.squeeze(), displacement, prefilter=True, axis=axis)
     return correct_dim(ed_x)
-
-
-def correct_dim(x):
-    if len(x.shape) == 2:
-        return x.unsqueeze(dim=0)
-    else:
-        return x
 
 
 if __name__ == '__main__':
