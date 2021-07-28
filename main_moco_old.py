@@ -258,16 +258,15 @@ def main_worker(gpu, ngpus_per_node, args, exp_output):
     if args.channel_num == 3:
         normalize = transforms.Normalize(mean=[0.184, 0.184, 0.184],
                                          std=[0.055, 0.055, 0.055])
+        axis = (1, 2)
     else:
         normalize = transforms.Normalize(mean=[0.184], std=[0.055])
+        axis = (0, 1)
 
     augmentation = [
-        transforms.RandomResizedCrop(512, scale=(0.6, 1.)),
-        # transforms.RandomApply([
-        #     transforms.ColorJitter(0.4, 0.4, 0.4, 0.1)  # not strengthened
-        # ], p=0.8),
-        # transforms.RandomGrayscale(p=0.2),
-        #transforms.RandomApply([transforms.GaussianBlur(kernel_size=[5, 5], sigma=[.1, 2.])], p=0.5),
+        transforms.RandomApply([
+            transforms.Lambda(lambda x: elastic_deform(x.squeeze(), control_points_num=3, sigma=15, axis=axis))
+        ], p=0.5),
         transforms.RandomHorizontalFlip(),
         #transforms.ToTensor(),
         normalize
