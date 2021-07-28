@@ -109,7 +109,7 @@ parser.add_argument('--cos', action='store_true',
                     help='use cosine lr schedule')
 
 # Use Gaussian blur probability in Augmentations
-parser.add_argument('--gbp', default=0, type=float,
+parser.add_argument('--gbp', default=0.0, type=float,
                     help='probability of using Gaussian blur')
 
 
@@ -265,9 +265,7 @@ def main_worker(gpu, ngpus_per_node, args, exp_output):
         axis = (0, 1)
 
     augmentation = [
-        transforms.RandomApply([
-            transforms.Lambda(lambda x: elastic_deform(x.squeeze(), control_points_num=3, sigma=15, axis=axis))
-        ], p=0.5),
+        transforms.RandomApply([moco.loader.ElasticDeform(control_points_num=3, sigma=15, axis=axis)], p=0.5),
         transforms.RandomAffine(45, translate=[0.2, 0.2], scale=[0.5, 1.5], shear=0.2),
         transforms.RandomApply([
             transforms.GaussianBlur(kernel_size=[5, 5], sigma=[.1, 2.])
@@ -430,23 +428,6 @@ def accuracy(output, target, topk=(1,)):
             correct_k = correct[:k].reshape(-1).float().sum(0, keepdim=True)
             res.append(correct_k.mul_(100.0 / batch_size))
         return res
-
-
-def elastic_deform(x, control_points_num=3, sigma=20, axis=(1, 2)):
-    # generate a deformation grid
-    displacement = np.random.randn(2, control_points_num, control_points_num) * sigma
-    # construct PyTorch input and top gradient
-    displacement = torch.tensor(displacement)
-    # elastic deformation
-    ed_x = etorch.deform_grid(x.squeeze(), displacement, prefilter=True, axis=axis)
-    return correct_dim(ed_x)
-
-
-def correct_dim(x):
-    if len(x.shape) == 2:
-        return x.unsqueeze(dim=0)
-    else:
-        return x
 
 
 if __name__ == '__main__':
