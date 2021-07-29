@@ -21,7 +21,7 @@ python3 /misc/student/alzouabk/Thesis/self_supervised_pretraining/moco/main_linc
   --num_channels 3 \
   --lr 30.0 \
   --batch-size 32 \
-  --pretrained /misc/student/alzouabk/Thesis/self_supervised_pretraining/moco/outputs/3c_v1_2/checkpoint_0199.pth.tar \
+  --pretrained /misc/student/alzouabk/Thesis/self_supervised_pretraining/moco/outputs/3c_v2_bestAug_GB/checkpoint_0002.pth.tar \
   --dist-url 'tcp://localhost:10001' --multiprocessing-distributed --world-size 1 --rank 0 \
   --workers 8 \
 
