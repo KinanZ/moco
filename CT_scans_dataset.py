@@ -10,7 +10,7 @@ from torch.utils.data import Dataset
 class brain_CT_scan(Dataset):
     """Brain CT Scans dataset."""
 
-    def __init__(self, json_file, root_dir, transform=None, num_channels=3):
+    def __init__(self, json_file, root_dir, transform=None, num_channels=3, moco=True):
         """
         Args:
             json_file (string): Path to the json file with annotations.
@@ -28,6 +28,7 @@ class brain_CT_scan(Dataset):
         self.transform = transform
 
         self.num_channels = num_channels
+        self.moco = moco
 
     def __len__(self):
         return len(self.dataset_annotations)
@@ -63,6 +64,11 @@ class brain_CT_scan(Dataset):
             image = torch.from_numpy(image).permute(2, 0, 1)
 
         image1 = self.transform(image)
-        image2 = self.transform(image)
-
-        return (image1, image2)
+        if self.moco:
+            image2 = self.transform(image)
+            return (image1, image2)
+        else:
+            classes = self.dataset_annotations[idx]['labels']
+            labels = np.zeros(self.num_classes).astype(np.uint8)
+            labels[classes] = 1
+            return image1, torch.tensor(labels, dtype=torch.float32)

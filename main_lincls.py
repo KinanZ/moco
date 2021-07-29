@@ -212,6 +212,8 @@ def main_worker(gpu, ngpus_per_node, args, exp_output):
         else:
             print("=> no checkpoint found at '{}'".format(args.pretrained))
 
+    print(model)
+
     if args.distributed:
         # For multiprocessing distributed, DistributedDataParallel constructor
         # should always set the single device scope, otherwise,
@@ -293,10 +295,12 @@ def main_worker(gpu, ngpus_per_node, args, exp_output):
     ])
     train_dataset = brain_CT_scan(json_file=args.train_data, root_dir=args.images,
                                   transform=train_augmentation,
-                                  num_channels=args.num_channels)
+                                  num_channels=args.num_channels,
+                                  moco=False)
     valid_dataset = brain_CT_scan(json_file=args.valid_data, root_dir=args.images,
                                   transform=valid_augmentation,
-                                  num_channels=args.num_channels)
+                                  num_channels=args.num_channels,
+                                  moco=False)
 
     if args.distributed:
         train_sampler = torch.utils.data.distributed.DistributedSampler(train_dataset)

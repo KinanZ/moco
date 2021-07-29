@@ -272,7 +272,8 @@ def main_worker(gpu, ngpus_per_node, args, exp_output):
 
     train_dataset = brain_CT_scan(json_file=args.data, root_dir=args.images,
                                   transform=moco.loader.TwoCropsTransform(transforms.Compose(augmentation)),
-                                  num_channels=args.num_channels)
+                                  num_channels=args.num_channels,
+                                  moco=True)
 
     if args.distributed:
         train_sampler = torch.utils.data.distributed.DistributedSampler(train_dataset)
