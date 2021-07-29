@@ -7,6 +7,7 @@ import random
 import shutil
 import time
 import warnings
+import sys
 
 import torch
 import torch.nn as nn
@@ -18,8 +19,15 @@ import torch.multiprocessing as mp
 import torch.utils.data
 import torch.utils.data.distributed
 import torchvision.transforms as transforms
-import torchvision.datasets as datasets
 import torchvision.models as models
+
+from CT_scans_dataset import brain_CT_scan
+
+import numpy as np
+from sklearn.metrics import precision_score, recall_score, f1_score, accuracy_score
+import csv
+import matplotlib.pyplot as plt
+
 
 model_names = sorted(name for name in models.__dict__
     if name.islower() and not name.startswith("__")
@@ -28,11 +36,13 @@ model_names = sorted(name for name in models.__dict__
 parser = argparse.ArgumentParser(description='PyTorch MoCo Brain CT Scans Training')
 parser.add_argument('--exp', default='test_1',
                     help='experiment_name')
-parser.add_argument('--data', default='/misc/lmbraid19/argusm/CLUSTER/multimed/NSEG2015_2/train.json',
-                    help='path to json file with dataset information')
+parser.add_argument('--train_data', default='/misc/lmbraid19/argusm/CLUSTER/multimed/NSEG2015_2/train.json',
+                    help='path to json file with train dataset information')
+parser.add_argument('--valid_data', default='/misc/lmbraid19/argusm/CLUSTER/multimed/NSEG2015_2/test.json',
+                    help='path to json file with test dataset information')
 parser.add_argument('--images', default='/misc/lmbraid19/argusm/CLUSTER/multimed/NSEG2015_2/JPEGImages/',
                     help='path to json file with dataset information')
-parser.add_argument('--output_dir', default='/misc/student/alzouabk/Thesis/self_supervised_pretraining/moco/outputs/',
+parser.add_argument('--output_dir', default='/misc/student/alzouabk/Thesis/self_supervised_pretraining/moco/outputs_lincls/',
                     help='path to output directory')
 parser.add_argument('-a', '--arch', metavar='ARCH', default='resnet50',
                     choices=model_names,
@@ -92,7 +102,18 @@ best_acc1 = 0
 
 
 def main():
+    # starting time:
+    start_time = time.time()
+
     args = parser.parse_args()
+
+    exp_output = os.path.join(args.output_dir, args.exp)
+    if not os.path.exists(exp_output):
+        os.makedirs(exp_output)
+
+    # save command line args
+    with open(os.path.join(exp_output, 'commandline_args.txt'), 'w') as f:
+        f.write('\n'.join(sys.argv[1:]))
 
     if args.seed is not None:
         random.seed(args.seed)
@@ -120,13 +141,20 @@ def main():
         args.world_size = ngpus_per_node * args.world_size
         # Use torch.multiprocessing.spawn to launch distributed processes: the
         # main_worker process function
-        mp.spawn(main_worker, nprocs=ngpus_per_node, args=(ngpus_per_node, args))
+        mp.spawn(main_worker, nprocs=ngpus_per_node, args=(ngpus_per_node, args, exp_output))
     else:
         # Simply call main_worker function
-        main_worker(args.gpu, ngpus_per_node, args)
+        main_worker(args.gpu, ngpus_per_node, args, exp_output)
+        # time at the end and print it:
+
+    end_time = time.time()
+    hours, rem = divmod(end_time - start_time, 3600)
+    minutes, seconds = divmod(rem, 60)
+    print("Training is done!, Execution time was: ")
+    print("{:0>2}:{:0>2}:{:05.2f}".format(int(hours), int(minutes), seconds))
 
 
-def main_worker(gpu, ngpus_per_node, args):
+def main_worker(gpu, ngpus_per_node, args, exp_output):
     global best_acc1
     args.gpu = gpu
 
@@ -214,7 +242,7 @@ def main_worker(gpu, ngpus_per_node, args):
             model = torch.nn.DataParallel(model).cuda()
 
     # define loss function (criterion) and optimizer
-    criterion = nn.CrossEntropyLoss().cuda(args.gpu)
+    criterion = nn.BCEWithLogitsLoss().cuda(args.gpu)
 
     # optimize only the linear classifier
     parameters = list(filter(lambda p: p.requires_grad, model.parameters()))
@@ -248,19 +276,27 @@ def main_worker(gpu, ngpus_per_node, args):
     cudnn.benchmark = True
 
     # Data loading code
-    traindir = os.path.join(args.data, 'train')
-    valdir = os.path.join(args.data, 'val')
-    normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406],
-                                     std=[0.229, 0.224, 0.225])
+    if args.num_channels == 3:
+        normalize = transforms.Normalize(mean=[0.184, 0.184, 0.184],
+                                         std=[0.055, 0.055, 0.055])
+    else:
+        normalize = transforms.Normalize(mean=[0.184], std=[0.055])
 
-    train_dataset = datasets.ImageFolder(
-        traindir,
-        transforms.Compose([
-            transforms.RandomResizedCrop(224),
-            transforms.RandomHorizontalFlip(),
-            transforms.ToTensor(),
-            normalize,
-        ]))
+    train_augmentation = transforms.Compose([
+        transforms.RandomAffine(45, translate=[0.2, 0.2], scale=[0.5, 1.5], shear=0.2),
+        transforms.RandomHorizontalFlip(),
+        normalize
+    ])
+
+    valid_augmentation = transforms.Compose([
+        normalize
+    ])
+    train_dataset = brain_CT_scan(json_file=args.train_data, root_dir=args.images,
+                                  transform=train_augmentation,
+                                  num_channels=args.num_channels)
+    valid_dataset = brain_CT_scan(json_file=args.valid_data, root_dir=args.images,
+                                  transform=valid_augmentation,
+                                  num_channels=args.num_channels)
 
     if args.distributed:
         train_sampler = torch.utils.data.distributed.DistributedSampler(train_dataset)
@@ -272,17 +308,15 @@ def main_worker(gpu, ngpus_per_node, args):
         num_workers=args.workers, pin_memory=True, sampler=train_sampler)
 
     val_loader = torch.utils.data.DataLoader(
-        datasets.ImageFolder(valdir, transforms.Compose([
-            transforms.Resize(256),
-            transforms.CenterCrop(224),
-            transforms.ToTensor(),
-            normalize,
-        ])),
-        batch_size=args.batch_size, shuffle=False,
+        valid_dataset, batch_size=args.batch_size, shuffle=False,
         num_workers=args.workers, pin_memory=True)
 
+    eval_results = {'accuracy': [], 'micro/precision': [], 'micro/recall': [], 'micro/f1': [],
+                    'macro/precision': [], 'macro/recall': [], 'macro/f1': [],
+                    'samples/precision': [], 'samples/recall': [], 'samples/f1': []}
+
     if args.evaluate:
-        validate(val_loader, model, criterion, args)
+        _, eval_results = validate(val_loader, model, criterion, args)
         return
 
     for epoch in range(args.start_epoch, args.epochs):
@@ -294,8 +328,9 @@ def main_worker(gpu, ngpus_per_node, args):
         train(train_loader, model, criterion, optimizer, epoch, args)
 
         # evaluate on validation set
-        acc1 = validate(val_loader, model, criterion, args)
-
+        acc1, eval_result = validate(val_loader, model, criterion, args)
+        for key in eval_results:
+            eval_results[key].append(eval_result[key])
         # remember best acc@1 and save checkpoint
         is_best = acc1 > best_acc1
         best_acc1 = max(acc1, best_acc1)
@@ -308,9 +343,12 @@ def main_worker(gpu, ngpus_per_node, args):
                 'state_dict': model.state_dict(),
                 'best_acc1': best_acc1,
                 'optimizer' : optimizer.state_dict(),
-            }, is_best)
+            }, is_best, filename=os.path.join(exp_output, 'best_model.pth.tar'.format(epoch)))
             if epoch == args.start_epoch:
                 sanity_check(model.state_dict(), args.pretrained)
+
+    save_csv(eval_results, exp_output)
+    plot_evaluation_metrics(eval_results, exp_output)
 
 
 def train(train_loader, model, criterion, optimizer, epoch, args):
@@ -378,6 +416,9 @@ def validate(val_loader, model, criterion, args):
     # switch to evaluate mode
     model.eval()
 
+    model_results = []
+    targets = []
+
     with torch.no_grad():
         end = time.time()
         for i, (images, target) in enumerate(val_loader):
@@ -395,6 +436,10 @@ def validate(val_loader, model, criterion, args):
             top1.update(acc1[0], images.size(0))
             top5.update(acc5[0], images.size(0))
 
+            # save output and tat for later evaluation
+            model_results.extend(torch.sigmoid(output).cpu().numpy())
+            targets.extend(target.cpu().numpy())
+
             # measure elapsed time
             batch_time.update(time.time() - end)
             end = time.time()
@@ -402,17 +447,30 @@ def validate(val_loader, model, criterion, args):
             if i % args.print_freq == 0:
                 progress.display(i)
 
+        result = calculate_metrics(np.array(model_results), np.array(targets))
+
         # TODO: this should also be done with the ProgressMeter
         print(' * Acc@1 {top1.avg:.3f} Acc@5 {top5.avg:.3f}'
               .format(top1=top1, top5=top5))
 
-    return top1.avg
+    return top1.avg, result
 
 
 def save_checkpoint(state, is_best, filename='checkpoint.pth.tar'):
     torch.save(state, filename)
     if is_best:
         shutil.copyfile(filename, 'model_best.pth.tar')
+
+
+def save_csv(data, path):
+    header = data.keys()
+    no_rows = len(data[list(header)[0]])
+
+    with open(os.path.join(path, 'eval_metrics.csv'), 'w', newline='') as csvfile:
+        csvwriter = csv.writer(csvfile, delimiter=',')
+        csvwriter.writerow(header)
+        for row in range(no_rows):
+            csvwriter.writerow([data[key][row] for key in header])
 
 
 def sanity_check(state_dict, pretrained_weights):
@@ -504,6 +562,85 @@ def accuracy(output, target, topk=(1,)):
             correct_k = correct[:k].view(-1).float().sum(0, keepdim=True)
             res.append(correct_k.mul_(100.0 / batch_size))
         return res
+
+
+def calculate_metrics(pred, target, threshold=0.5):
+
+    pred = np.array(pred > threshold, dtype=float)
+
+    # Accuracy: In multilabel classification, this function computes subset accuracy: the set of labels predicted
+    # for a sample must exactly match the corresponding set of labels in y_true.
+    accuracy = accuracy_score(y_true=target, y_pred=pred)
+
+    # 'micro': Calculate metrics globally by counting the total true positives, false negatives and false positives.
+    # 'macro': Calculate metrics for each label, and find their unweighted mean.
+    # This does not take label imbalance into account.
+    # 'samples': Calculate metrics for each instance, and find their average
+    # (only meaningful for multilabel classification where this differs from accuracy_score)
+
+    micro_precision = precision_score(y_true=target, y_pred=pred, average='micro', zero_division=0)
+    micro_recall = recall_score(y_true=target, y_pred=pred, average='micro', zero_division=0)
+    micro_f1 = f1_score(y_true=target, y_pred=pred, average='micro', zero_division=0)
+
+    macro_precision = precision_score(y_true=target, y_pred=pred, average='macro', zero_division=0)
+    macro_recall = recall_score(y_true=target, y_pred=pred, average='macro', zero_division=0)
+    macro_f1 =f1_score(y_true=target, y_pred=pred, average='macro', zero_division=0)
+
+    samples_precision = precision_score(y_true=target, y_pred=pred, average='samples', zero_division=0)
+    samples_recall = recall_score(y_true=target, y_pred=pred, average='samples', zero_division=0)
+    samples_f1 = f1_score(y_true=target, y_pred=pred, average='samples', zero_division=0)
+
+    return {
+        'accuracy': accuracy,
+        'micro/precision': micro_precision,
+        'micro/recall': micro_recall,
+        'micro/f1': micro_f1,
+        'macro/precision': macro_precision,
+        'macro/recall': macro_recall,
+        'macro/f1': macro_f1,
+        'samples/precision': samples_precision,
+        'samples/recall': samples_recall,
+        'samples/f1': samples_f1,
+            }
+
+
+def plot_evaluation_metrics(eval_results, output_path):
+    # plot accuracy
+    plt.figure(figsize=(10, 7))
+    plt.plot(eval_results['accuracy'], color='blue', label='Accuracy')
+    plt.xlabel('Epochs')
+    plt.ylabel('Accuracy')
+    plt.savefig(os.path.join(output_path, 'Accuracy.png'))
+
+    # plot precision
+    plt.figure(figsize=(10, 7))
+    plt.plot(eval_results['micro/precision'], color='blue', label='micro/precision')
+    plt.plot(eval_results['macro/precision'], color='red', label='macro/precision')
+    plt.plot(eval_results['samples/precision'], color='green', label='samples/precision')
+    plt.xlabel('Epochs')
+    plt.ylabel('Precision')
+    plt.legend()
+    plt.savefig(os.path.join(output_path, 'Precision.png'))
+
+    # plot recall
+    plt.figure(figsize=(10, 7))
+    plt.plot(eval_results['micro/recall'], color='blue', label='micro/recall')
+    plt.plot(eval_results['macro/recall'], color='red', label='macro/recall')
+    plt.plot(eval_results['samples/recall'], color='green', label='samples/recall')
+    plt.xlabel('Epochs')
+    plt.ylabel('Recall')
+    plt.legend()
+    plt.savefig(os.path.join(output_path, 'recall.png'))
+
+    # plot f1
+    plt.figure(figsize=(10, 7))
+    plt.plot(eval_results['micro/f1'], color='blue', label='micro/f1')
+    plt.plot(eval_results['macro/f1'], color='red', label='macro/f1')
+    plt.plot(eval_results['samples/f1'], color='green', label='samples/f1')
+    plt.xlabel('Epochs')
+    plt.ylabel('F1_score')
+    plt.legend()
+    plt.savefig(os.path.join(output_path, 'F1.png'))
 
 
 if __name__ == '__main__':
