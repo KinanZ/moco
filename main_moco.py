@@ -261,7 +261,7 @@ def main_worker(gpu, ngpus_per_node, args, exp_output):
         axis = (0, 1)
 
     augmentation = [
-        transforms.RandomApply([moco.loader.ElasticDeform(control_points_num=3, sigma=15, axis=axis)], p=0.5),
+        transforms.RandomApply([moco.loader.ElasticDeform(control_points_num=3, sigma=15, axis=axis)], p=0),
         transforms.RandomAffine(45, translate=[0.2, 0.2], scale=[0.5, 1.5], shear=0.2),
         transforms.RandomApply([
             transforms.GaussianBlur(kernel_size=[5, 5], sigma=[.1, 2.])
