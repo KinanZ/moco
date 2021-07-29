@@ -16,7 +16,7 @@ echo 'Training Should start'
 python3 /misc/student/alzouabk/Thesis/self_supervised_pretraining/moco/main_lincls.py \
   --exp 'test_1' \
   --epochs 2 \
-  -print-freq 1 \
+  -p 1 \
   -arch resnet50 \
   --num_channels 3 \
   --lr 30.0 \
