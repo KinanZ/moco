@@ -10,7 +10,7 @@ from torch.utils.data import Dataset
 class brain_CT_scan(Dataset):
     """Brain CT Scans dataset."""
 
-    def __init__(self, json_file, root_dir, transform=None, num_channels=3, moco=True):
+    def __init__(self, json_file, root_dir, transform=None, num_channels=3, moco=True, num_classes=15):
         """
         Args:
             json_file (string): Path to the json file with annotations.
@@ -29,6 +29,7 @@ class brain_CT_scan(Dataset):
 
         self.num_channels = num_channels
         self.moco = moco
+        self. num_classes= num_classes
 
     def __len__(self):
         return len(self.dataset_annotations)
