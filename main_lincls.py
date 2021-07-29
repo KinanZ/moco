@@ -25,14 +25,22 @@ model_names = sorted(name for name in models.__dict__
     if name.islower() and not name.startswith("__")
     and callable(models.__dict__[name]))
 
-parser = argparse.ArgumentParser(description='PyTorch ImageNet Training')
-parser.add_argument('data', metavar='DIR',
-                    help='path to dataset')
+parser = argparse.ArgumentParser(description='PyTorch MoCo Brain CT Scans Training')
+parser.add_argument('--exp', default='test_1',
+                    help='experiment_name')
+parser.add_argument('--data', default='/misc/lmbraid19/argusm/CLUSTER/multimed/NSEG2015_2/train.json',
+                    help='path to json file with dataset information')
+parser.add_argument('--images', default='/misc/lmbraid19/argusm/CLUSTER/multimed/NSEG2015_2/JPEGImages/',
+                    help='path to json file with dataset information')
+parser.add_argument('--output_dir', default='/misc/student/alzouabk/Thesis/self_supervised_pretraining/moco/outputs/',
+                    help='path to output directory')
 parser.add_argument('-a', '--arch', metavar='ARCH', default='resnet50',
                     choices=model_names,
                     help='model architecture: ' +
                         ' | '.join(model_names) +
                         ' (default: resnet50)')
+parser.add_argument('--num_channels', default=1, type=int,
+                    help='1 or 3, if 3 then we stack the pre and next slices to the current slice as 3-channel image')
 parser.add_argument('-j', '--workers', default=32, type=int, metavar='N',
                     help='number of data loading workers (default: 32)')
 parser.add_argument('--epochs', default=100, type=int, metavar='N',

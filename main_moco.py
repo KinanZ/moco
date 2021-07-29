@@ -10,7 +10,6 @@ import time
 import warnings
 
 import sys
-import numpy as np
 
 import torch
 import torch.nn as nn
@@ -27,8 +26,6 @@ import torchvision.models as models
 import moco.loader
 import moco.builder
 from CT_scans_dataset import brain_CT_scan
-
-import elasticdeform.torch as etorch
 
 model_names = sorted(name for name in models.__dict__
     if name.islower() and not name.startswith("__")
@@ -48,7 +45,7 @@ parser.add_argument('-a', '--arch', metavar='ARCH', default='resnet50',
                     help='model architecture: ' +
                         ' | '.join(model_names) +
                         ' (default: resnet50)')
-parser.add_argument('--channel_num', default=1, type=int,
+parser.add_argument('--num_channels', default=1, type=int,
                     help='1 or 3, if 3 then we stack the pre and next slices to the current slice as 3-channel image')
 parser.add_argument('-j', '--workers', default=32, type=int, metavar='N',
                     help='number of data loading workers (default: 32)')
@@ -93,8 +90,8 @@ parser.add_argument('--multiprocessing-distributed', action='store_true',
                          'multi node data parallel training')
 
 # moco specific configs:
-parser.add_argument('--moco-dim', default=128, type=int,
-                    help='feature dimension (default: 128)')
+parser.add_argument('--moco-dim', default=15, type=int,
+                    help='feature dimension (default: 15)')
 parser.add_argument('--moco-k', default=65536, type=int,
                     help='queue size; number of negative keys (default: 65536)')
 parser.add_argument('--moco-m', default=0.999, type=float,
@@ -197,7 +194,7 @@ def main_worker(gpu, ngpus_per_node, args, exp_output):
     print("=> creating model '{}'".format(args.arch))
     model = moco.builder.MoCo(
         models.__dict__[args.arch],
-        args.moco_dim, args.moco_k, args.moco_m, args.moco_t, args.mlp, args.channel_num)
+        args.moco_dim, args.moco_k, args.moco_m, args.moco_t, args.mlp, args.num_channels)
     print(model)
 
     if args.distributed:
@@ -256,7 +253,7 @@ def main_worker(gpu, ngpus_per_node, args, exp_output):
     cudnn.benchmark = True
 
     # Data loading code
-    if args.channel_num == 3:
+    if args.num_channels == 3:
         normalize = transforms.Normalize(mean=[0.184, 0.184, 0.184],
                                          std=[0.055, 0.055, 0.055])
         axis = (1, 2)
@@ -276,7 +273,7 @@ def main_worker(gpu, ngpus_per_node, args, exp_output):
 
     train_dataset = brain_CT_scan(json_file=args.data, root_dir=args.images,
                                   transform=moco.loader.TwoCropsTransform(transforms.Compose(augmentation)),
-                                  num_channels=args.channel_num)
+                                  num_channels=args.num_channels)
 
     if args.distributed:
         train_sampler = torch.utils.data.distributed.DistributedSampler(train_dataset)
