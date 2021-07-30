@@ -20,7 +20,7 @@ python3 /misc/student/alzouabk/Thesis/self_supervised_pretraining/moco/main_linc
   --arch resnet50 \
   --num_channels 3 \
   --lr 30.0 \
-  --schedule [20, 30] \
+  --schedule [20,30] \
   --batch-size 32 \
   --pretrained /misc/student/alzouabk/Thesis/self_supervised_pretraining/moco/outputs/3c_v2_bestAug/checkpoint_0063.pth.tar \
   --dist-url 'tcp://localhost:10001' --multiprocessing-distributed --world-size 1 --rank 0 \
