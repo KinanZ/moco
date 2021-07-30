@@ -51,6 +51,8 @@ parser.add_argument('-a', '--arch', metavar='ARCH', default='resnet50',
                         ' (default: resnet50)')
 parser.add_argument('--num_channels', default=1, type=int,
                     help='1 or 3, if 3 then we stack the pre and next slices to the current slice as 3-channel image')
+parser.add_argument('--num_classes', default=15, type=int,
+                    help='number of categories in the dataset')
 parser.add_argument('-j', '--workers', default=32, type=int, metavar='N',
                     help='number of data loading workers (default: 32)')
 parser.add_argument('--epochs', default=100, type=int, metavar='N',
@@ -185,6 +187,7 @@ def main_worker(gpu, ngpus_per_node, args, exp_output):
         if name not in ['fc.weight', 'fc.bias']:
             param.requires_grad = False
     # init the fc layer
+    model.fc = nn.Linear(in_features=model.fc.in_features, out_features=args.num_classes)
     model.fc.weight.data.normal_(mean=0.0, std=0.01)
     model.fc.bias.data.zero_()
 
