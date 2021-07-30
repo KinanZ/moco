@@ -323,7 +323,7 @@ def main_worker(gpu, ngpus_per_node, args, exp_output):
                     'samples/precision': [], 'samples/recall': [], 'samples/f1': []}
 
     if args.evaluate:
-        _, eval_results = validate(val_loader, model, criterion, args)
+        eval_results = validate(val_loader, model, criterion, args)
         return
 
     for epoch in range(args.start_epoch, args.epochs):
@@ -335,12 +335,13 @@ def main_worker(gpu, ngpus_per_node, args, exp_output):
         train(train_loader, model, criterion, optimizer, epoch, args)
 
         # evaluate on validation set
-        acc1, eval_result = validate(val_loader, model, criterion, args)
+        #acc1, eval_result = validate(val_loader, model, criterion, args)
+        eval_result = validate(val_loader, model, criterion, args)
         for key in eval_results:
             eval_results[key].append(eval_result[key])
         # remember best acc@1 and save checkpoint
-        is_best = acc1 > best_acc1
-        best_acc1 = max(acc1, best_acc1)
+        is_best = eval_result['accuracy'][epoch] > best_acc1
+        best_acc1 = max(eval_result['accuracy'][epoch], best_acc1)
 
         if not args.multiprocessing_distributed or (args.multiprocessing_distributed
                 and args.rank % ngpus_per_node == 0):
@@ -362,11 +363,11 @@ def train(train_loader, model, criterion, optimizer, epoch, args):
     batch_time = AverageMeter('Time', ':6.3f')
     data_time = AverageMeter('Data', ':6.3f')
     losses = AverageMeter('Loss', ':.4e')
-    top1 = AverageMeter('Acc@1', ':6.2f')
-    top5 = AverageMeter('Acc@5', ':6.2f')
+    #top1 = AverageMeter('Acc@1', ':6.2f')
+    #top5 = AverageMeter('Acc@5', ':6.2f')
     progress = ProgressMeter(
         len(train_loader),
-        [batch_time, data_time, losses, top1, top5],
+        [batch_time, data_time, losses],#, top1, top5],
         prefix="Epoch: [{}]".format(epoch))
 
     """
@@ -394,8 +395,8 @@ def train(train_loader, model, criterion, optimizer, epoch, args):
         # measure accuracy and record loss
         acc1, acc5 = accuracy(output, target, topk=(1, 5))
         losses.update(loss.item(), images.size(0))
-        top1.update(acc1[0], images.size(0))
-        top5.update(acc5[0], images.size(0))
+        #top1.update(acc1[0], images.size(0))
+        #top5.update(acc5[0], images.size(0))
 
         # compute gradient and do SGD step
         optimizer.zero_grad()
@@ -413,11 +414,11 @@ def train(train_loader, model, criterion, optimizer, epoch, args):
 def validate(val_loader, model, criterion, args):
     batch_time = AverageMeter('Time', ':6.3f')
     losses = AverageMeter('Loss', ':.4e')
-    top1 = AverageMeter('Acc@1', ':6.2f')
-    top5 = AverageMeter('Acc@5', ':6.2f')
+    #top1 = AverageMeter('Acc@1', ':6.2f')
+    #top5 = AverageMeter('Acc@5', ':6.2f')
     progress = ProgressMeter(
         len(val_loader),
-        [batch_time, losses, top1, top5],
+        [batch_time, losses],# top1, top5],
         prefix='Test: ')
 
     # switch to evaluate mode
@@ -438,10 +439,10 @@ def validate(val_loader, model, criterion, args):
             loss = criterion(output, target)
 
             # measure accuracy and record loss
-            acc1, acc5 = accuracy(output, target, topk=(1, 5))
+            #acc1, acc5 = accuracy(output, target, topk=(1, 5))
             losses.update(loss.item(), images.size(0))
-            top1.update(acc1[0], images.size(0))
-            top5.update(acc5[0], images.size(0))
+            #top1.update(acc1[0], images.size(0))
+            #top5.update(acc5[0], images.size(0))
 
             # save output and tat for later evaluation
             model_results.extend(torch.sigmoid(output).cpu().numpy())
@@ -457,10 +458,10 @@ def validate(val_loader, model, criterion, args):
         result = calculate_metrics(np.array(model_results), np.array(targets))
 
         # TODO: this should also be done with the ProgressMeter
-        print(' * Acc@1 {top1.avg:.3f} Acc@5 {top5.avg:.3f}'
-              .format(top1=top1, top5=top5))
+        #print(' * Acc@1 {top1.avg:.3f} Acc@5 {top5.avg:.3f}'
+        #      .format(top1=top1, top5=top5))
 
-    return top1.avg, result
+    return result
 
 
 def save_checkpoint(state, is_best, filename='checkpoint.pth.tar'):
@@ -566,7 +567,7 @@ def accuracy(output, target, topk=(1,)):
 
         res = []
         for k in topk:
-            correct_k = correct[:k].view(-1).float().sum(0, keepdim=True)
+            correct_k = correct[:k].reshape(-1).float().sum(0, keepdim=True)
             res.append(correct_k.mul_(100.0 / batch_size))
         return res
 
