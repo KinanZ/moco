@@ -340,7 +340,7 @@ def main_worker(gpu, ngpus_per_node, args, exp_output):
         for key in eval_results:
             eval_results[key].append(eval_result[key])
         # remember best acc@1 and save checkpoint
-        is_best = eval_result['accuracy'][epoch] > best_acc1
+        is_best = eval_result['accuracy'] > best_acc1
         best_acc1 = max(eval_result['accuracy'][epoch], best_acc1)
 
         if not args.multiprocessing_distributed or (args.multiprocessing_distributed
