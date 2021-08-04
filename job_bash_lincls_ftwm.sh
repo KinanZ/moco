@@ -1,9 +1,9 @@
-#PBS -N moco_3c_v1_bestAug_2
+#PBS -N moco_lincls_ftwm
 #PBS -S /bin/bash
 #PBS -l nodes=1:ppn=8:gpus=2:nvidiaMin11GB,mem=16gb,walltime=24:00:00
 #PBS -j oe
 #PBS -q student
-#PBS -o /misc/student/alzouabk/Thesis/self_supervised_pretraining/moco/moco_curves/
+#PBS -o /misc/student/alzouabk/Thesis/self_supervised_pretraining/moco/outputs_lincls/
 
 
 homePath='/misc/student/alzouabk/miniconda3'
@@ -13,14 +13,16 @@ echo "pid, gpu_utilization [%], mem_utilization [%], max_memory_usage [MiB], tim
 nvidia-smi --query-accounted-apps="pid,gpu_util,mem_util,max_memory_usage,time" --format=csv | tail -n1
 
 echo 'Training Should start'
-python3 /misc/student/alzouabk/Thesis/self_supervised_pretraining/moco/main_moco.py \
-  --exp '3c_v1_bestAug_2' \
-  --epochs 100 \
-  --print-freq 10 \
+python3 /misc/student/alzouabk/Thesis/self_supervised_pretraining/moco/main_lincls.py \
+  --exp 'bestAug_lincls_ftwm' \
+  --epochs 50 \
+  --ftwm True \
+  --print-freq 1 \
   --arch resnet50 \
   --num_channels 3 \
-  --lr 0.00375 \
+  --lr 3.75 \
   --batch-size 32 \
+  --pretrained /misc/student/alzouabk/Thesis/self_supervised_pretraining/moco/outputs/3c_v2_bestAug_2_128/checkpoint_0099.pth.tar \
   --dist-url 'tcp://localhost:10001' --multiprocessing-distributed --world-size 1 --rank 0 \
   --workers 8 \
 

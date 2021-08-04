@@ -53,6 +53,8 @@ parser.add_argument('--num_channels', default=1, type=int,
                     help='1 or 3, if 3 then we stack the pre and next slices to the current slice as 3-channel image')
 parser.add_argument('--num_classes', default=15, type=int,
                     help='number of categories in the dataset')
+parser.add_argument('--ftwm', default=False, type=bool,
+                    help='finetune the whole model instead of just fc')
 parser.add_argument('-j', '--workers', default=32, type=int, metavar='N',
                     help='number of data loading workers (default: 32)')
 parser.add_argument('--epochs', default=100, type=int, metavar='N',
@@ -182,10 +184,11 @@ def main_worker(gpu, ngpus_per_node, args, exp_output):
     print("=> creating model '{}'".format(args.arch))
     model = models.__dict__[args.arch]()
 
-    # freeze all layers but the last fc
-    for name, param in model.named_parameters():
-        if name not in ['fc.weight', 'fc.bias']:
-            param.requires_grad = False
+    if not args.ftwm:
+        # freeze all layers but the last fc
+        for name, param in model.named_parameters():
+            if name not in ['fc.weight', 'fc.bias']:
+                param.requires_grad = False
     # init the fc layer
     model.fc = nn.Linear(in_features=model.fc.in_features, out_features=args.num_classes)
     model.fc.weight.data.normal_(mean=0.0, std=0.01)
