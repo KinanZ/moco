@@ -7,15 +7,6 @@ import torch
 from torch.utils.data import Dataset
 
 
-import os
-import json
-from PIL import Image
-import numpy as np
-import torch
-
-from torch.utils.data import Dataset
-
-
 class brain_CT_scan(Dataset):
     """Brain CT Scans dataset."""
 
@@ -82,4 +73,3 @@ class brain_CT_scan(Dataset):
             labels = np.zeros(self.num_classes).astype(np.uint8)
             labels[classes] = 1
             return image1, torch.tensor(labels, dtype=torch.float32)
-        
