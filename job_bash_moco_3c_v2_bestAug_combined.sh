@@ -1,4 +1,4 @@
-#PBS -N moco_3c_v2_bestAug_2_128
+#PBS -N moco_3c_v2_bestAug_combined
 #PBS -S /bin/bash
 #PBS -l nodes=1:ppn=8:gpus=2:nvidiaMin11GB,mem=16gb,walltime=24:00:00
 #PBS -j oe
@@ -14,7 +14,8 @@ nvidia-smi --query-accounted-apps="pid,gpu_util,mem_util,max_memory_usage,time" 
 
 echo 'Training Should start'
 python3 /misc/student/alzouabk/Thesis/self_supervised_pretraining/moco/main_moco.py \
-  --exp '3c_v2_bestAug_2_128' \
+  --data '/misc/student/alzouabk/Thesis/self_supervised_pretraining/moco/train_and_test.json' \
+  --exp '3c_v2_bestAug_combined' \
   --epochs 100 \
   --print-freq 10 \
   --arch resnet50 \
