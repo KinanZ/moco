@@ -7,6 +7,15 @@ import torch
 from torch.utils.data import Dataset
 
 
+import os
+import json
+from PIL import Image
+import numpy as np
+import torch
+
+from torch.utils.data import Dataset
+
+
 class brain_CT_scan(Dataset):
     """Brain CT Scans dataset."""
 
@@ -24,13 +33,6 @@ class brain_CT_scan(Dataset):
             self.dataset_annotations = json.load(f_obj)["questions"]
         self.root_dir = root_dir
 
-        self.images = {}
-        for i in range(len(self.dataset_annotations)):
-            img_iid = self.dataset_annotations[i]['iid']
-            img_path = os.path.join(self.root_dir, '{0:07d}.jpg'.format(img_iid))
-            image = np.array(Image.open(img_path)).astype(np.float32)
-            self.images[img_iid] = image
-
         assert transform is not None
         self.transform = transform
 
@@ -43,23 +45,31 @@ class brain_CT_scan(Dataset):
 
     def __getitem__(self, idx):
         if self.num_channels == 1:
-            img_iid = self.dataset_annotations[idx]['iid']
-            image = self.images[img_iid]
+            img_name = os.path.join(self.root_dir, '{0:07d}.jpg'.format(self.dataset_annotations[idx]['iid']))
+            image = np.array(Image.open(img_name)).astype(np.float32)
             image = torch.from_numpy(image).unsqueeze(dim=0)
         elif self.num_channels == 3:
-            img_iid_mid = self.dataset_annotations[idx]['iid']
-            image_mid = self.images[img_iid_mid]
-            try:
-                img_iid_pre = self.dataset_annotations[idx - 1]['iid']
-            except:
-                img_iid_pre = self.dataset_annotations[idx]['iid']
-            image_pre = self.images[img_iid_pre]
-            try:
-                img_iid_post = self.dataset_annotations[idx + 1]['iid']
-            except:
-                img_iid_post = self.dataset_annotations[idx]['iid']
-            image_post = self.images[img_iid_post]
+            img_name_mid = os.path.join(self.root_dir, '{0:07d}.jpg'.format(self.dataset_annotations[idx]['iid']))
 
+            try:
+                img_name_pre = os.path.join(self.root_dir,
+                                            '{0:07d}.jpg'.format(self.dataset_annotations[idx - 1]['iid']))
+            except:
+                # if idx == 0
+                img_name_pre = os.path.join(self.root_dir,
+                                            '{0:07d}.jpg'.format(self.dataset_annotations[idx]['iid']))
+
+            try:
+                img_name_post = os.path.join(self.root_dir,
+                                             '{0:07d}.jpg'.format(self.dataset_annotations[idx + 1]['iid']))
+            except:
+                # if idx == len(self.dataset_annotations)
+                img_name_post = os.path.join(self.root_dir,
+                                             '{0:07d}.jpg'.format(self.dataset_annotations[idx]['iid']))
+
+            image_mid = np.array(Image.open(img_name_mid)).astype(np.float32)
+            image_pre = np.array(Image.open(img_name_pre)).astype(np.float32)
+            image_post = np.array(Image.open(img_name_post)).astype(np.float32)
             image = np.dstack((image_pre, image_mid, image_post))
             image = torch.from_numpy(image).permute(2, 0, 1)
 
@@ -72,3 +82,4 @@ class brain_CT_scan(Dataset):
             labels = np.zeros(self.num_classes).astype(np.uint8)
             labels[classes] = 1
             return image1, torch.tensor(labels, dtype=torch.float32)
+        
