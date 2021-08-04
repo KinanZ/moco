@@ -252,9 +252,10 @@ def main_worker(gpu, ngpus_per_node, args, exp_output):
     # define loss function (criterion) and optimizer
     criterion = nn.BCEWithLogitsLoss().cuda(args.gpu)
 
-    # optimize only the linear classifier
     parameters = list(filter(lambda p: p.requires_grad, model.parameters()))
-    assert len(parameters) == 2  # fc.weight, fc.bias
+    if not args.ftwm:
+        # optimize only the linear classifier
+        assert len(parameters) == 2  # fc.weight, fc.bias
     optimizer = torch.optim.SGD(parameters, args.lr,
                                 momentum=args.momentum,
                                 weight_decay=args.weight_decay)
