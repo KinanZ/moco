@@ -31,21 +31,29 @@ class brain_CT_scan_moco(Dataset):
         return len(self.img_list)
 
     def __getitem__(self, idx):
+        img_iid = int(self.img_list[idx][:-4])
         if self.num_channels == 1:
             img_name = os.path.join(self.root_dir, self.img_list[idx])
             image = np.array(Image.open(img_name)).astype(np.float32)
             image = torch.from_numpy(image).unsqueeze(dim=0)
         elif self.num_channels == 3:
             img_name_mid = os.path.join(self.root_dir, self.img_list[idx])
-
             try:
-                img_name_pre = os.path.join(self.root_dir, self.img_list[idx - 1])
+                img_iid_pre = int(self.img_list[idx - 1][:-4])  # -'.jpg'
+                if img_iid_pre == img_iid - 1:
+                    img_name_pre = os.path.join(self.root_dir, self.img_list[idx - 1])
+                else:
+                    img_name_pre = os.path.join(self.root_dir, self.img_list[idx])
             except:
                 # if idx == 0
                 img_name_pre = os.path.join(self.root_dir, self.img_list[idx])
 
             try:
-                img_name_post = os.path.join(self.root_dir, self.img_list[idx + 1])
+                img_iid_post = int(self.img_list[idx + 1][:-4])  # -'.jpg'
+                if img_iid_post == img_iid + 1:
+                    img_name_post = os.path.join(self.root_dir, self.img_list[idx + 1])
+                else:
+                    img_name_post = os.path.join(self.root_dir, self.img_list[idx])
             except:
                 # if idx == len(self.img_list)
                 img_name_post = os.path.join(self.root_dir, self.img_list[idx])
