@@ -24,15 +24,14 @@ import torchvision.models as models
 
 import moco.loader
 import moco.builder
-from CT_scans_dataset import brain_CT_scan
+from CT_scans_dataset import brain_CT_scan_moco
 
 model_names = sorted(name for name in models.__dict__
     if name.islower() and not name.startswith("__")
     and callable(models.__dict__[name]))
 
 parser = argparse.ArgumentParser(description='PyTorch MoCo Brain CT Scans Training')
-parser.add_argument('--exp', default='test_1',
-                    help='experiment_name')
+parser.add_argument('--exp', default='test_1', help='experiment_name')
 parser.add_argument('--data', default='/misc/lmbraid19/argusm/CLUSTER/multimed/NSEG2015_2/train.json',
                     help='path to json file with dataset information')
 parser.add_argument('--images', default='/misc/lmbraid19/argusm/CLUSTER/multimed/NSEG2015_2/JPEGImages/',
@@ -270,10 +269,9 @@ def main_worker(gpu, ngpus_per_node, args, exp_output):
         normalize
     ]
 
-    train_dataset = brain_CT_scan(json_file=args.data, root_dir=args.images,
-                                  transform=moco.loader.TwoCropsTransform(transforms.Compose(augmentation)),
-                                  num_channels=args.num_channels,
-                                  moco=True)
+    train_dataset = brain_CT_scan_moco(root_dir=args.images,
+                                       transform=moco.loader.TwoCropsTransform(transforms.Compose(augmentation)),
+                                       num_channels=args.num_channels)
 
     if args.distributed:
         train_sampler = torch.utils.data.distributed.DistributedSampler(train_dataset)
