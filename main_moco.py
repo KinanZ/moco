@@ -58,7 +58,7 @@ parser.add_argument('-b', '--batch-size', default=256, type=int,
                          'using Data Parallel or Distributed Data Parallel')
 parser.add_argument('--lr', '--learning-rate', default=0.03, type=float,
                     metavar='LR', help='initial learning rate', dest='lr')
-parser.add_argument('--schedule', default=[120, 160], nargs='*', type=int,
+parser.add_argument('--schedule', default=[60, 80], nargs='*', type=int,
                     help='learning rate schedule (when to drop lr by 10x)')
 parser.add_argument('--momentum', default=0.9, type=float, metavar='M',
                     help='momentum of SGD solver')
@@ -282,23 +282,26 @@ def main_worker(gpu, ngpus_per_node, args, exp_output):
         train_dataset, batch_size=args.batch_size, shuffle=(train_sampler is None),
         num_workers=args.workers, pin_memory=True, sampler=train_sampler, drop_last=True)
 
+    max_top1 = 0
     for epoch in range(args.start_epoch, args.epochs):
         if args.distributed:
             train_sampler.set_epoch(epoch)
         adjust_learning_rate(optimizer, epoch, args)
 
         # train for one epoch
-        train(train_loader, model, criterion, optimizer, epoch, args)
+        top1 = train(train_loader, model, criterion, optimizer, epoch, args)
 
-        if epoch == args.epochs - 1:
+        if top1 > max_top1:
+            max_top1 = top1
             if not args.multiprocessing_distributed or (args.multiprocessing_distributed
                     and args.rank % ngpus_per_node == 0):
+                print('Saving this checkpoint!')
                 save_checkpoint({
                     'epoch': epoch + 1,
                     'arch': args.arch,
                     'state_dict': model.state_dict(),
                     'optimizer': optimizer.state_dict(),
-                }, is_best=False, filename=os.path.join(exp_output, 'checkpoint_{:04d}.pth.tar'.format(epoch)))
+                }, is_best=False, filename=os.path.join(exp_output, 'best_model.pth.tar'))
 
 
 def train(train_loader, model, criterion, optimizer, epoch, args):
@@ -347,6 +350,7 @@ def train(train_loader, model, criterion, optimizer, epoch, args):
 
         if i % args.print_freq == 0:
             progress.display(i)
+    return top1.avg
 
 
 def save_checkpoint(state, is_best, filename='checkpoint.pth.tar'):

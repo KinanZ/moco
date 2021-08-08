@@ -355,7 +355,7 @@ def main_worker(gpu, ngpus_per_node, args, exp_output):
                 'state_dict': model.state_dict(),
                 'best_acc1': best_acc1,
                 'optimizer' : optimizer.state_dict(),
-            }, is_best, filename=os.path.join(exp_output, 'best_model.pth.tar'.format(epoch)))
+            }, is_best, filename=os.path.join(exp_output, 'best_model.pth.tar'))
             if epoch == args.start_epoch and not args.ftwm:
                 sanity_check(model.state_dict(), args.pretrained)
 
