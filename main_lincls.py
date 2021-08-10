@@ -49,8 +49,6 @@ parser.add_argument('-a', '--arch', metavar='ARCH', default='resnet50',
                     help='model architecture: ' +
                         ' | '.join(model_names) +
                         ' (default: resnet50)')
-parser.add_argument('--num_channels', default=1, type=int,
-                    help='1 or 3, if 3 then we stack the pre and next slices to the current slice as 3-channel image')
 parser.add_argument('--num_classes', default=15, type=int,
                     help='number of categories in the dataset')
 parser.add_argument('--ftwm', default=False, type=bool,
@@ -285,11 +283,7 @@ def main_worker(gpu, ngpus_per_node, args, exp_output):
     cudnn.benchmark = True
 
     # Data loading code
-    if args.num_channels == 3:
-        normalize = transforms.Normalize(mean=[0.184, 0.184, 0.184],
-                                         std=[0.055, 0.055, 0.055])
-    else:
-        normalize = transforms.Normalize(mean=[0.184], std=[0.055])
+    normalize = transforms.Normalize(mean=[0.184, 0.184, 0.184], std=[0.055, 0.055, 0.055])
 
     train_augmentation = transforms.Compose([
         transforms.RandomAffine(45, translate=[0.2, 0.2], scale=[0.5, 1.5], shear=0.2),
@@ -300,14 +294,8 @@ def main_worker(gpu, ngpus_per_node, args, exp_output):
     valid_augmentation = transforms.Compose([
         normalize
     ])
-    train_dataset = brain_CT_scan(json_file=args.train_data, root_dir=args.images,
-                                  transform=train_augmentation,
-                                  num_channels=args.num_channels,
-                                  moco=False)
-    valid_dataset = brain_CT_scan(json_file=args.valid_data, root_dir=args.images,
-                                  transform=valid_augmentation,
-                                  num_channels=args.num_channels,
-                                  moco=False)
+    train_dataset = brain_CT_scan(json_file=args.train_data, root_dir=args.images, transform=train_augmentation)
+    valid_dataset = brain_CT_scan(json_file=args.valid_data, root_dir=args.images, transform=valid_augmentation)
 
     if args.distributed:
         train_sampler = torch.utils.data.distributed.DistributedSampler(train_dataset)
