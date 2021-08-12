@@ -1,6 +1,6 @@
-#PBS -N moco_lincls_all_no_mlp_e2e
+#PBS -N moco_lincl_no_mlp_loss
 #PBS -S /bin/bash
-#PBS -l nodes=1:ppn=8:gpus=2:nvidiaMin11GB,mem=16gb,walltime=24:00:00
+#PBS -l nodes=1:ppn=8:gpus=2:nvidiaMin12GB,mem=16gb,walltime=24:00:00
 #PBS -j oe
 #PBS -q student
 #PBS -o /misc/student/alzouabk/Thesis/self_supervised_pretraining/moco/outputs_lincls/
@@ -14,15 +14,14 @@ nvidia-smi --query-accounted-apps="pid,gpu_util,mem_util,max_memory_usage,time" 
 
 echo 'Training Should start'
 python3 /misc/student/alzouabk/Thesis/self_supervised_pretraining/moco/main_lincls.py \
-  --exp 'bestAug_lincls_all_no_mlp_e2e' \
+  --exp 'moco_lincl_no_mlp_loss' \
   --epochs 40 \
-  --ftwm True \
+  --e2e False \
   --print-freq 1 \
-  --arch resnet50 \
-  --num_channels 3 \
-  --lr 0.0005 \
-  --batch-size 32 \
-  --pretrained /misc/student/alzouabk/Thesis/self_supervised_pretraining/moco/outputs/3c_v2_bestAug_all_upgraded_no_mlp/best_model.pth.tar \
+  --arch resnet18 \
+  --lr 0.01 \
+  --batch-size 48 \
+  --pretrained misc/student/alzouabk/Thesis/self_supervised_pretraining/moco/outputs/no_mlp_bestAug/best_model_loss.pth.tar \
   --dist-url 'tcp://localhost:10001' --multiprocessing-distributed --world-size 1 --rank 0 \
   --workers 8 \
 
