@@ -43,8 +43,8 @@ parser.add_argument('-a', '--arch', metavar='ARCH', default='resnet50',
                     help='model architecture: ' +
                         ' | '.join(model_names) +
                         ' (default: resnet50)')
-parser.add_argument('--num_channels', default=1, type=int,
-                    help='1 or 3, if 3 then we stack the pre and next slices to the current slice as 3-channel image')
+parser.add_argument('--stack_pre_post', default=True, type=bool,
+                    help='if True -> the previous and post slices are stacked to the main slice and become a 3-channel input for the model.')
 parser.add_argument('-j', '--workers', default=32, type=int, metavar='N',
                     help='number of data loading workers (default: 32)')
 parser.add_argument('--epochs', default=200, type=int, metavar='N',
@@ -90,7 +90,7 @@ parser.add_argument('--multiprocessing-distributed', action='store_true',
 # moco specific configs:
 parser.add_argument('--moco-dim', default=128, type=int,
                     help='feature dimension (default: 15)')
-parser.add_argument('--moco-k', default=65536, type=int,
+parser.add_argument('--moco-k', default=65520, type=int,
                     help='queue size; number of negative keys (default: 65536)')
 parser.add_argument('--moco-m', default=0.999, type=float,
                     help='moco momentum of updating key encoder (default: 0.999)')
@@ -192,7 +192,7 @@ def main_worker(gpu, ngpus_per_node, args, exp_output):
     print("=> creating model '{}'".format(args.arch))
     model = moco.builder.MoCo(
         models.__dict__[args.arch],
-        args.moco_dim, args.moco_k, args.moco_m, args.moco_t, args.mlp, args.num_channels)
+        args.moco_dim, args.moco_k, args.moco_m, args.moco_t, args.mlp)
     print(model)
 
     if args.distributed:
@@ -251,16 +251,11 @@ def main_worker(gpu, ngpus_per_node, args, exp_output):
     cudnn.benchmark = True
 
     # Data loading code
-    if args.num_channels == 3:
-        normalize = transforms.Normalize(mean=[0.184, 0.184, 0.184],
-                                         std=[0.055, 0.055, 0.055])
-        axis = (1, 2)
-    else:
-        normalize = transforms.Normalize(mean=[0.184], std=[0.055])
-        axis = (0, 1)
+    normalize = transforms.Normalize(mean=[0.184, 0.184, 0.184], std=[0.055, 0.055, 0.055])
+    ED_axis = (1, 2)
 
     augmentation = [
-        transforms.RandomApply([moco.loader.ElasticDeform(control_points_num=3, sigma=15, axis=axis)], p=0),
+        transforms.RandomApply([moco.loader.ElasticDeform(control_points_num=3, sigma=15, axis=ED_axis)], p=0),
         transforms.RandomAffine(45, translate=[0.2, 0.2], scale=[0.5, 1.5], shear=0.2),
         transforms.RandomApply([
             transforms.GaussianBlur(kernel_size=[5, 5], sigma=[.1, 2.])
@@ -271,7 +266,7 @@ def main_worker(gpu, ngpus_per_node, args, exp_output):
 
     train_dataset = brain_CT_scan_moco(root_dir=args.images,
                                        transform=moco.loader.TwoCropsTransform(transforms.Compose(augmentation)),
-                                       num_channels=args.num_channels)
+                                       stack_pre_post=args.stack_pre_post)
 
     if args.distributed:
         train_sampler = torch.utils.data.distributed.DistributedSampler(train_dataset)
@@ -283,25 +278,37 @@ def main_worker(gpu, ngpus_per_node, args, exp_output):
         num_workers=args.workers, pin_memory=True, sampler=train_sampler, drop_last=True)
 
     max_top1 = 0
+    min_loss = 100
     for epoch in range(args.start_epoch, args.epochs):
         if args.distributed:
             train_sampler.set_epoch(epoch)
         adjust_learning_rate(optimizer, epoch, args)
 
         # train for one epoch
-        top1 = train(train_loader, model, criterion, optimizer, epoch, args)
+        top1, loss = train(train_loader, model, criterion, optimizer, epoch, args)
 
         if top1 > max_top1:
             max_top1 = top1
             if not args.multiprocessing_distributed or (args.multiprocessing_distributed
                     and args.rank % ngpus_per_node == 0):
-                print('Saving this checkpoint!')
+                print('Saving this checkpoint! (best acc@1)')
                 save_checkpoint({
                     'epoch': epoch + 1,
                     'arch': args.arch,
                     'state_dict': model.state_dict(),
                     'optimizer': optimizer.state_dict(),
-                }, is_best=False, filename=os.path.join(exp_output, 'best_model.pth.tar'))
+                }, is_best=False, filename=os.path.join(exp_output, 'best_model_acc.pth.tar'))
+        if loss < min_loss:
+            min_loss = loss
+            if not args.multiprocessing_distributed or (args.multiprocessing_distributed
+                    and args.rank % ngpus_per_node == 0):
+                print('Saving this checkpoint! (best loss)')
+                save_checkpoint({
+                    'epoch': epoch + 1,
+                    'arch': args.arch,
+                    'state_dict': model.state_dict(),
+                    'optimizer': optimizer.state_dict(),
+                }, is_best=False, filename=os.path.join(exp_output, 'best_model_loss.pth.tar'))
 
 
 def train(train_loader, model, criterion, optimizer, epoch, args):
@@ -350,7 +357,7 @@ def train(train_loader, model, criterion, optimizer, epoch, args):
 
         if i % args.print_freq == 0:
             progress.display(i)
-    return top1.avg
+    return top1.avg, losses.avg
 
 
 def save_checkpoint(state, is_best, filename='checkpoint.pth.tar'):

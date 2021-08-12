@@ -10,14 +10,13 @@ from torch.utils.data import Dataset
 class brain_CT_scan_moco(Dataset):
     """Brain CT Scans dataset."""
 
-    def __init__(self, root_dir, transform=None, num_channels=3):
+    def __init__(self, root_dir, transform=None, stack_pre_post=True):
         """
         Args:
             root_dir (string): Directory with all the images.
             transform (callable, optional): Optional transform to be applied
                 on a sample.
-            num_channels (int): if 1 -> one slice is the input for the model,
-                if 3 -> the previous and post slices are stacked to the main slice and become a 3-channel input for the model.
+            stack_pre_post (bool): if True -> the previous and post slices are stacked to the main slice and become a 3-channel input for the model.
         """
         self.root_dir = root_dir
         self.img_list = sorted(os.listdir("/misc/lmbraid19/argusm/CLUSTER/multimed/NSEG2015_2/JPEGImages/"))
@@ -25,38 +24,30 @@ class brain_CT_scan_moco(Dataset):
         assert transform is not None
         self.transform = transform
 
-        self.num_channels = num_channels
+        self.stack_pre_post = stack_pre_post
 
     def __len__(self):
         return len(self.img_list)
 
     def __getitem__(self, idx):
-        img_iid = int(self.img_list[idx][:-4])
-        if self.num_channels == 1:
+        if not self.stack_pre_post:
             img_name = os.path.join(self.root_dir, self.img_list[idx])
             image = np.array(Image.open(img_name)).astype(np.float32)
-            image = torch.from_numpy(image).unsqueeze(dim=0)
-        elif self.num_channels == 3:
+            image = np.dstack((image, image, image))
+            image = torch.from_numpy(image).permute(2, 0, 1)
+        else:
             img_name_mid = os.path.join(self.root_dir, self.img_list[idx])
             try:
-                img_iid_pre = int(self.img_list[idx - 1][:-4])  # -'.jpg'
-                if img_iid_pre == img_iid - 1:
-                    img_name_pre = os.path.join(self.root_dir, self.img_list[idx - 1])
-                else:
-                    img_name_pre = os.path.join(self.root_dir, self.img_list[idx])
+                img_name_pre = os.path.join(self.root_dir, self.img_list[idx - 1])
             except:
                 # if idx == 0
-                img_name_pre = os.path.join(self.root_dir, self.img_list[idx])
+                img_name_pre = img_name_mid
 
             try:
-                img_iid_post = int(self.img_list[idx + 1][:-4])  # -'.jpg'
-                if img_iid_post == img_iid + 1:
-                    img_name_post = os.path.join(self.root_dir, self.img_list[idx + 1])
-                else:
-                    img_name_post = os.path.join(self.root_dir, self.img_list[idx])
+                img_name_post = os.path.join(self.root_dir, self.img_list[idx + 1])
             except:
                 # if idx == len(self.img_list)
-                img_name_post = os.path.join(self.root_dir, self.img_list[idx])
+                img_name_post = img_name_mid
 
             image_mid = np.array(Image.open(img_name_mid)).astype(np.float32)
             image_pre = np.array(Image.open(img_name_pre)).astype(np.float32)

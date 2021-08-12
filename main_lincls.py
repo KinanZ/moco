@@ -51,7 +51,9 @@ parser.add_argument('-a', '--arch', metavar='ARCH', default='resnet50',
                         ' (default: resnet50)')
 parser.add_argument('--num_classes', default=15, type=int,
                     help='number of categories in the dataset')
-parser.add_argument('--ftwm', default=False, type=bool,
+parser.add_argument('--stack_pre_post', default=True, type=bool,
+                    help='if True -> the previous and post slices are stacked to the main slice and become a 3-channel input for the model.')
+parser.add_argument('--e2e', default=False, type=bool,
                     help='finetune the whole model instead of just fc')
 parser.add_argument('-j', '--workers', default=32, type=int, metavar='N',
                     help='number of data loading workers (default: 32)')
@@ -182,7 +184,7 @@ def main_worker(gpu, ngpus_per_node, args, exp_output):
     print("=> creating model '{}'".format(args.arch))
     model = models.__dict__[args.arch]()
 
-    if not args.ftwm:
+    if not args.e2e:
         # freeze all layers but the last fc
         for name, param in model.named_parameters():
             if name not in ['fc.weight', 'fc.bias']:
@@ -251,7 +253,7 @@ def main_worker(gpu, ngpus_per_node, args, exp_output):
     criterion = nn.BCEWithLogitsLoss().cuda(args.gpu)
 
     parameters = list(filter(lambda p: p.requires_grad, model.parameters()))
-    if not args.ftwm:
+    if not args.e2e:
         # optimize only the linear classifier
         assert len(parameters) == 2  # fc.weight, fc.bias
     optimizer = torch.optim.SGD(parameters, args.lr,
@@ -284,9 +286,14 @@ def main_worker(gpu, ngpus_per_node, args, exp_output):
 
     # Data loading code
     normalize = transforms.Normalize(mean=[0.184, 0.184, 0.184], std=[0.055, 0.055, 0.055])
+    ED_axis = (1, 2)
 
     train_augmentation = transforms.Compose([
+        transforms.RandomApply([moco.loader.ElasticDeform(control_points_num=3, sigma=15, axis=ED_axis)], p=0),
         transforms.RandomAffine(45, translate=[0.2, 0.2], scale=[0.5, 1.5], shear=0.2),
+        transforms.RandomApply([
+            transforms.GaussianBlur(kernel_size=[5, 5], sigma=[.1, 2.])
+        ], p=args.gbp),
         transforms.RandomHorizontalFlip(),
         normalize
     ])
@@ -294,8 +301,8 @@ def main_worker(gpu, ngpus_per_node, args, exp_output):
     valid_augmentation = transforms.Compose([
         normalize
     ])
-    train_dataset = brain_CT_scan(json_file=args.train_data, root_dir=args.images, transform=train_augmentation)
-    valid_dataset = brain_CT_scan(json_file=args.valid_data, root_dir=args.images, transform=valid_augmentation)
+    train_dataset = brain_CT_scan(json_file=args.train_data, root_dir=args.images, transform=train_augmentation, stack_pre_post=args.stack_pre_post)
+    valid_dataset = brain_CT_scan(json_file=args.valid_data, root_dir=args.images, transform=valid_augmentation, stack_pre_post=args.stack_pre_post)
 
     if args.distributed:
         train_sampler = torch.utils.data.distributed.DistributedSampler(train_dataset)
@@ -344,7 +351,7 @@ def main_worker(gpu, ngpus_per_node, args, exp_output):
                 'best_acc1': best_acc1,
                 'optimizer' : optimizer.state_dict(),
             }, is_best, filename=os.path.join(exp_output, 'best_model.pth.tar'))
-            if epoch == args.start_epoch and not args.ftwm:
+            if epoch == args.start_epoch and not args.e2e:
                 sanity_check(model.state_dict(), args.pretrained)
 
     save_csv(eval_results, exp_output)
@@ -369,7 +376,7 @@ def train(train_loader, model, criterion, optimizer, epoch, args):
     BatchNorm in train mode may revise running mean/std (even if it receives
     no gradient), which are part of the model parameters too.
     """
-    if args.ftwm:
+    if args.e2e:
         model.train()
     else:
         model.eval()

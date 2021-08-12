@@ -44,8 +44,5 @@ class ElasticDeform(object):
         # construct PyTorch input and top gradient
         displacement = torch.tensor(displacement)
         # elastic deformation
-        ed_x = etorch.deform_grid(x.squeeze(), displacement, prefilter=True, axis=self.axis)
-        if len(ed_x.shape) == 2:
-            return ed_x.unsqueeze(dim=0)
-        else:
-            return ed_x
+        ed_x = etorch.deform_grid(x, displacement, prefilter=True, axis=self.axis)
+        return ed_x

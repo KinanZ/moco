@@ -1,6 +1,6 @@
-#PBS -N moco_3c_v2_bestAug_all
+#PBS -N moco_no_mlp_bestAug
 #PBS -S /bin/bash
-#PBS -l nodes=1:ppn=8:gpus=2:nvidiaMin11GB,mem=16gb,walltime=24:00:00
+#PBS -l nodes=1:ppn=8:gpus=2:nvidiaMin12GB,mem=16gb,walltime=24:00:00
 #PBS -j oe
 #PBS -q student
 #PBS -o /misc/student/alzouabk/Thesis/self_supervised_pretraining/moco/moco_curves/
@@ -14,17 +14,14 @@ nvidia-smi --query-accounted-apps="pid,gpu_util,mem_util,max_memory_usage,time" 
 
 echo 'Training Should start'
 python3 /misc/student/alzouabk/Thesis/self_supervised_pretraining/moco/main_moco.py \
-  --exp '3c_v2_bestAug_all' \
+  --exp 'no_mlp_bestAug' \
   --epochs 100 \
   --print-freq 10 \
-  --arch resnet50 \
+  --arch resnet18 \
   --moco-dim 128 \
-  --num_channels 3 \
+  --stack_pre_post= True \
   --lr 0.00375 \
-  --batch-size 32 \
+  --batch-size 48 \
   --dist-url 'tcp://localhost:10001' --multiprocessing-distributed --world-size 1 --rank 0 \
-  --mlp \
-  --moco-t 0.2 \
-  --cos \
   --workers 8 \
 
