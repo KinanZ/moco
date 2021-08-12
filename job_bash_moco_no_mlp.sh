@@ -19,7 +19,7 @@ python3 /misc/student/alzouabk/Thesis/self_supervised_pretraining/moco/main_moco
   --print-freq 10 \
   --arch resnet18 \
   --moco-dim 128 \
-  --stack_pre_post= True \
+  --stack_pre_post True \
   --lr 0.00375 \
   --batch-size 48 \
   --dist-url 'tcp://localhost:10001' --multiprocessing-distributed --world-size 1 --rank 0 \
