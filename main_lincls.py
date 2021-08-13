@@ -103,6 +103,10 @@ parser.add_argument('--multiprocessing-distributed', action='store_true',
 parser.add_argument('--pretrained', default='', type=str,
                     help='path to moco pretrained checkpoint')
 
+# Use Gaussian blur probability in Augmentations
+parser.add_argument('--gbp', default=0.0, type=float,
+                    help='probability of using Gaussian blur')
+
 best_acc1 = 0
 
 
