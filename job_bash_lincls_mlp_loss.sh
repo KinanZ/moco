@@ -1,6 +1,6 @@
 #PBS -N moco_lincl_mlp_loss
 #PBS -S /bin/bash
-#PBS -l nodes=1:ppn=8:gpus=2:nvidiaMin12GB,mem=16gb,walltime=24:00:00
+#PBS -l nodes=1:ppn=8:gpus=2:nvidiaMin11GB,mem=16gb,walltime=24:00:00
 #PBS -j oe
 #PBS -q student
 #PBS -o /misc/student/alzouabk/Thesis/self_supervised_pretraining/moco/outputs_lincls/
@@ -14,8 +14,8 @@ nvidia-smi --query-accounted-apps="pid,gpu_util,mem_util,max_memory_usage,time" 
 
 echo 'Training Should start'
 python3 /misc/student/alzouabk/Thesis/self_supervised_pretraining/moco/main_lincls.py \
-  --exp 'moco_lincl_mlp_loss' \
-  --epochs 40 \
+  --exp 'moco_lincl_mlp_loss_2' \
+  --epochs 80 \
   --e2e False \
   --print-freq 1 \
   --arch resnet18 \
