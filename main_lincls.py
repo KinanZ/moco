@@ -22,6 +22,7 @@ import torchvision.transforms as transforms
 import torchvision.models as models
 
 from CT_scans_dataset import brain_CT_scan
+import moco.loader
 
 import numpy as np
 from sklearn.metrics import precision_score, recall_score, f1_score, accuracy_score
