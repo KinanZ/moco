@@ -208,7 +208,10 @@ def main_worker(gpu, ngpus_per_node, args, exp_output):
             checkpoint = torch.load(args.pretrained, map_location="cpu")
 
             # rename moco pre-trained keys
-            state_dict = checkpoint['state_dict']
+            try:
+                state_dict = checkpoint['state_dict']
+            except:
+                state_dict = checkpoint['model_state_dict']
             for k in list(state_dict.keys()):
                 # retain only encoder_q up to before the embedding layer
                 if k.startswith('module.encoder_q') and not k.startswith('module.encoder_q.fc'):
