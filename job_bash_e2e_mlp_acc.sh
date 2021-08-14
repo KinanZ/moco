@@ -1,6 +1,6 @@
 #PBS -N moco_e2e_mlp_acc
 #PBS -S /bin/bash
-#PBS -l nodes=1:ppn=8:gpus=2:nvidiaMin12GB,mem=16gb,walltime=24:00:00
+#PBS -l nodes=1:ppn=8:gpus=2:nvidiaMin11GB,mem=16gb,walltime=24:00:00
 #PBS -j oe
 #PBS -q student
 #PBS -o /misc/student/alzouabk/Thesis/self_supervised_pretraining/moco/outputs_lincls/
@@ -14,9 +14,10 @@ nvidia-smi --query-accounted-apps="pid,gpu_util,mem_util,max_memory_usage,time" 
 
 echo 'Training Should start'
 python3 /misc/student/alzouabk/Thesis/self_supervised_pretraining/moco/main_lincls.py \
-  --exp 'moco_e2e_mlp_acc' \
+  --exp 'moco_e2e_mlp_acc_2' \
   --epochs 40 \
   --e2e True \
+  --optimizer adam \
   --print-freq 1 \
   --arch resnet18 \
   --lr 0.001 \

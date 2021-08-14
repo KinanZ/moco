@@ -394,7 +394,6 @@ def train(train_loader, model, criterion, optimizer, epoch, args):
     else:
         model.eval()
 
-
     end = time.time()
     for i, (images, target) in enumerate(train_loader):
         # measure data loading time
