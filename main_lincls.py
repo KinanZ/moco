@@ -69,6 +69,8 @@ parser.add_argument('-b', '--batch-size', default=256, type=int,
                          'using Data Parallel or Distributed Data Parallel')
 parser.add_argument('--lr', '--learning-rate', default=30., type=float,
                     metavar='LR', help='initial learning rate', dest='lr')
+parser.add_argument('--optimizer', dest='optimizer', default='sgd',
+                    help='optimizer to use, chexpert=adam, moco=sgd')
 parser.add_argument('--schedule', default=[40, 60], nargs='*', type=int,
                     help='learning rate schedule (when to drop lr by a ratio)')
 parser.add_argument('--momentum', default=0.9, type=float, metavar='M',
@@ -189,11 +191,11 @@ def main_worker(gpu, ngpus_per_node, args, exp_output):
     print("=> creating model '{}'".format(args.arch))
     model = models.__dict__[args.arch]()
 
-    if not args.e2e:
-        # freeze all layers but the last fc
-        for name, param in model.named_parameters():
-            if name not in ['fc.weight', 'fc.bias']:
-                param.requires_grad = False
+    # freeze all layers but the last fc
+    for name, param in model.named_parameters():
+        if name not in ['fc.weight', 'fc.bias']:
+            param.requires_grad = False
+
     # init the fc layer
     model.fc = nn.Linear(in_features=model.fc.in_features, out_features=args.num_classes)
     model.fc.weight.data.normal_(mean=0.0, std=0.01)
@@ -217,7 +219,7 @@ def main_worker(gpu, ngpus_per_node, args, exp_output):
 
             args.start_epoch = 0
             msg = model.load_state_dict(state_dict, strict=False)
-            assert set(msg.missing_keys) == {"fc.weight", "fc.bias"}
+            #assert set(msg.missing_keys) == {"fc.weight", "fc.bias"}
 
             print("=> loaded pre-trained model '{}'".format(args.pretrained))
         else:
@@ -261,9 +263,15 @@ def main_worker(gpu, ngpus_per_node, args, exp_output):
     if not args.e2e:
         # optimize only the linear classifier
         assert len(parameters) == 2  # fc.weight, fc.bias
-    optimizer = torch.optim.SGD(parameters, args.lr,
-                                momentum=args.momentum,
-                                weight_decay=args.weight_decay)
+
+    if args.optimizer == 'sgd':
+        optimizer = torch.optim.SGD(model.parameters(), args.lr,
+                                    momentum=args.momentum,
+                                    weight_decay=args.weight_decay)
+    elif args.optimizer == 'adam':
+        optimizer = torch.optim.Adam(model.parameters(), args.lr,
+                                     betas=(0.9, 0.999),
+                                     weight_decay=args.weight_decay)
 
     # optionally resume from a checkpoint
     if args.resume:
