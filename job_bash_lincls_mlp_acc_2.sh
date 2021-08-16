@@ -1,4 +1,4 @@
-#PBS -N moco_lincl_mlp_acc
+#PBS -N moco_lincl_mlp_acc_2
 #PBS -S /bin/bash
 #PBS -l nodes=1:ppn=8:gpus=2:nvidiaMin11GB,mem=16gb,walltime=24:00:00
 #PBS -j oe
@@ -13,8 +13,8 @@ echo "pid, gpu_utilization [%], mem_utilization [%], max_memory_usage [MiB], tim
 nvidia-smi --query-accounted-apps="pid,gpu_util,mem_util,max_memory_usage,time" --format=csv | tail -n1
 
 echo 'Training Should start'
-python3 /misc/student/alzouabk/Thesis/self_supervised_pretraining/moco/main_lincls.py \
-  --exp 'moco_lincl_mlp_acc_3' \
+python3 /misc/student/alzouabk/Thesis/self_supervised_pretraining/moco/main_lincls_2.py \
+  --exp 'moco_lincl_mlp_acc_4' \
   --epochs 40 \
   --e2e False \
   --print-freq 1 \
