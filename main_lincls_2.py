@@ -71,7 +71,7 @@ parser.add_argument('--lr', '--learning-rate', default=30., type=float,
                     metavar='LR', help='initial learning rate', dest='lr')
 parser.add_argument('--optimizer', dest='optimizer', default='sgd',
                     help='optimizer to use, chexpert=adam, moco=sgd')
-parser.add_argument('--schedule', default=[40, 60], nargs='*', type=int,
+parser.add_argument('--schedule', default=[20, 30], nargs='*', type=int,
                     help='learning rate schedule (when to drop lr by a ratio)')
 parser.add_argument('--momentum', default=0.9, type=float, metavar='M',
                     help='momentum')
@@ -190,7 +190,6 @@ def main_worker(gpu, ngpus_per_node, args, exp_output):
     # create model
     print("=> creating model '{}'".format(args.arch))
     model = models.__dict__[args.arch]()
-
 
     # freeze all layers but the last fc
     for name, param in model.named_parameters():
