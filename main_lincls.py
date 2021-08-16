@@ -71,7 +71,7 @@ parser.add_argument('--lr', '--learning-rate', default=30., type=float,
                     metavar='LR', help='initial learning rate', dest='lr')
 parser.add_argument('--optimizer', dest='optimizer', default='sgd',
                     help='optimizer to use, chexpert=adam, moco=sgd')
-parser.add_argument('--schedule', default=[40, 60], nargs='*', type=int,
+parser.add_argument('--schedule', default=[20, 30], nargs='*', type=int,
                     help='learning rate schedule (when to drop lr by a ratio)')
 parser.add_argument('--momentum', default=0.9, type=float, metavar='M',
                     help='momentum')
@@ -195,7 +195,6 @@ def main_worker(gpu, ngpus_per_node, args, exp_output):
     for name, param in model.named_parameters():
         if name not in ['fc.weight', 'fc.bias']:
             param.requires_grad = False
-
     # init the fc layer
     model.fc = nn.Linear(in_features=model.fc.in_features, out_features=args.num_classes)
     model.fc.weight.data.normal_(mean=0.0, std=0.01)
@@ -222,7 +221,7 @@ def main_worker(gpu, ngpus_per_node, args, exp_output):
 
             args.start_epoch = 0
             msg = model.load_state_dict(state_dict, strict=False)
-            #assert set(msg.missing_keys) == {"fc.weight", "fc.bias"}
+            assert set(msg.missing_keys) == {"fc.weight", "fc.bias"}
 
             print("=> loaded pre-trained model '{}'".format(args.pretrained))
         else:
@@ -265,7 +264,6 @@ def main_worker(gpu, ngpus_per_node, args, exp_output):
     parameters = list(filter(lambda p: p.requires_grad, model.parameters()))
     # optimize only the linear classifier
     assert len(parameters) == 2  # fc.weight, fc.bias
-
     if args.optimizer == 'sgd':
         optimizer = torch.optim.SGD(model.parameters(), args.lr,
                                     momentum=args.momentum,
@@ -367,6 +365,7 @@ def main_worker(gpu, ngpus_per_node, args, exp_output):
                 'optimizer' : optimizer.state_dict(),
             }, is_best, filename=os.path.join(exp_output, 'best_model.pth.tar'))
             if epoch == args.start_epoch and not args.e2e:
+                print('sanity_check')
                 sanity_check(model.state_dict(), args.pretrained)
 
     save_csv(eval_results, exp_output)
@@ -392,8 +391,10 @@ def train(train_loader, model, criterion, optimizer, epoch, args):
     no gradient), which are part of the model parameters too.
     """
     if args.e2e:
+        print('Traaaaaaaaaiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiin')
         model.train()
     else:
+        print('Evaaaaaaaaaaaaaaaaaaaaaaal')
         model.eval()
 
     end = time.time()
