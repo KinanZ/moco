@@ -14,14 +14,13 @@ nvidia-smi --query-accounted-apps="pid,gpu_util,mem_util,max_memory_usage,time" 
 
 echo 'Training Should start'
 python3 /misc/student/alzouabk/Thesis/self_supervised_pretraining/moco/main_lincls.py \
-  --exp 'moco_lincl_no_mlp_loss_2' \
-  --epochs 80 \
-  --e2e False \
+  --exp 'moco_lincl_no_mlp_loss' \
+  --epochs 40 \
   --print-freq 1 \
   --arch resnet18 \
   --lr 0.01 \
   --batch-size 48 \
-  --pretrained misc/student/alzouabk/Thesis/self_supervised_pretraining/moco/outputs/no_mlp_bestAug/best_model_loss.pth.tar \
+  --pretrained /misc/student/alzouabk/Thesis/self_supervised_pretraining/moco/outputs/no_mlp_bestAug/best_model_loss.pth.tar \
   --dist-url 'tcp://localhost:10001' --multiprocessing-distributed --world-size 1 --rank 0 \
   --workers 8 \
 
