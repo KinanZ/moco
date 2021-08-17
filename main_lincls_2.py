@@ -54,7 +54,7 @@ parser.add_argument('--num_classes', default=15, type=int,
                     help='number of categories in the dataset')
 parser.add_argument('--stack_pre_post', default=True, type=bool,
                     help='if True -> the previous and post slices are stacked to the main slice and become a 3-channel input for the model.')
-parser.add_argument('--e2e', default=None, type=bool,
+parser.add_argument('--e2e', action='store_false',
                     help='finetune the whole model instead of just fc')
 parser.add_argument('-j', '--workers', default=32, type=int, metavar='N',
                     help='number of data loading workers (default: 32)')
