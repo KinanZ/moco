@@ -20,6 +20,6 @@ python3 /misc/student/alzouabk/Thesis/self_supervised_pretraining/moco/main_linc
   --arch resnet18 \
   --lr 0.01 \
   --batch-size 48 \
-  --pretrained misc/student/alzouabk/Thesis/self_supervised_pretraining/moco/outputs/mlp_bestAug/best_model_acc.pth.tar \
+  --pretrained /misc/student/alzouabk/Thesis/self_supervised_pretraining/moco/outputs/mlp_bestAug/best_model_acc.pth.tar \
   --dist-url 'tcp://localhost:10001' --multiprocessing-distributed --world-size 1 --rank 0 \
   --workers 8 \
