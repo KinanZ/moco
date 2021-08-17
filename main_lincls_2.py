@@ -189,6 +189,7 @@ def main_worker(gpu, ngpus_per_node, args, exp_output):
     print("=> creating model '{}'".format(args.arch))
     model = models.__dict__[args.arch]()
 
+    print('args.e2e: ', args.e2e)
     if not args.e2e:
         print('freeze all layers but the last fc')
         # freeze all layers but the last fc
@@ -385,6 +386,7 @@ def train(train_loader, model, criterion, optimizer, epoch, args):
     no gradient), which are part of the model parameters too.
     """
     if args.e2e:
+        print('args.e2e: ', args.e2e)
         print('Traaaaaaaaaiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiin')
         model.train()
     else:
