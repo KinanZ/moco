@@ -16,7 +16,6 @@ echo 'Training Should start'
 python3 /misc/student/alzouabk/Thesis/self_supervised_pretraining/moco/main_lincls_2.py \
   --exp 'moco_lincl_mlp_acc_debug' \
   --epochs 2 \
-  --e2e no \
   --print-freq 1 \
   --arch resnet18 \
   --lr 0.01 \
