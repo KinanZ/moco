@@ -16,12 +16,13 @@ echo 'Training Should start'
 python3 /misc/student/alzouabk/Thesis/self_supervised_pretraining/moco/main_lincls.py \
   --exp 'moco_e2e_mlp_loss' \
   --epochs 40 \
-  --e2e True \
+  --e2e \
+  --optimizer adam \
   --print-freq 1 \
   --arch resnet18 \
   --lr 0.001 \
   --batch-size 48 \
-  --pretrained misc/student/alzouabk/Thesis/self_supervised_pretraining/moco/outputs/mlp_bestAug/best_model_loss.pth.tar \
+  --pretrained /misc/student/alzouabk/Thesis/self_supervised_pretraining/moco/outputs/mlp_bestAug/best_model_loss.pth.tar \
   --dist-url 'tcp://localhost:10001' --multiprocessing-distributed --world-size 1 --rank 0 \
   --workers 8 \
 
