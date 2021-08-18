@@ -374,7 +374,10 @@ def main_worker(gpu, ngpus_per_node, args, exp_output):
             }, is_best, filename=os.path.join(exp_output, 'best_model.pth.tar'))
             if epoch == args.start_epoch and not args.e2e:
                 print('sanity_check: ')
-                sanity_check(model.state_dict(), args.pretrained)
+                try:
+                    sanity_check(model.state_dict(), args.pretrained)
+                except:
+                    print('unable to load the pretrained model')
 
     save_csv(eval_results, exp_output)
     plot_evaluation_metrics(eval_results, exp_output)
