@@ -110,7 +110,7 @@ parser.add_argument('--gbp', default=0.0, type=float,
                     help='probability of using Gaussian blur')
 
 # Use ImageNet pretrained weights
-parser.add_argument('--from-imagenet', dest='from_imagenet', action='store_true',
+parser.add_argument('--from_imagenet', action='store_true',
                     help='use pre-trained ImageNet model')
 
 best_acc1 = 0
