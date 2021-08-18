@@ -1,4 +1,4 @@
-#PBS -N imagenet_e2e
+#PBS -N imagenet_e2e_resnet50
 #PBS -S /bin/bash
 #PBS -l nodes=1:ppn=8:gpus=2:nvidiaMin11GB,mem=16gb,walltime=24:00:00
 #PBS -j oe
@@ -14,12 +14,12 @@ nvidia-smi --query-accounted-apps="pid,gpu_util,mem_util,max_memory_usage,time" 
 
 echo 'Training Should start'
 python3 /misc/student/alzouabk/Thesis/self_supervised_pretraining/moco/main_lincls.py \
-  --exp 'imagenet_e2e' \
+  --exp 'imagenet_e2e_resnet50' \
   --epochs 40 \
   --e2e \
   --optimizer adam \
   --print-freq 1 \
-  --arch resnet18 \
+  --arch resnet50 \
   --lr 0.001 \
   --batch-size 48 \
   --from_imagenet \
