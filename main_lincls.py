@@ -109,6 +109,10 @@ parser.add_argument('--pretrained', default='', type=str,
 parser.add_argument('--gbp', default=0.0, type=float,
                     help='probability of using Gaussian blur')
 
+# Use ImageNet pretrained weights
+parser.add_argument('--from-imagenet', dest='from_imagenet', action='store_true',
+                    help='use pre-trained ImageNet model')
+
 best_acc1 = 0
 
 
@@ -189,7 +193,7 @@ def main_worker(gpu, ngpus_per_node, args, exp_output):
                                 world_size=args.world_size, rank=args.rank)
     # create model
     print("=> creating model '{}'".format(args.arch))
-    model = models.__dict__[args.arch]()
+    model = models.__dict__[args.arch](pretrained=args.from_imagenet)
 
     if not args.e2e:
         # freeze all layers but the last fc

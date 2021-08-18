@@ -107,6 +107,10 @@ parser.add_argument('--cos', action='store_true',
 parser.add_argument('--gbp', default=0.0, type=float,
                     help='probability of using Gaussian blur')
 
+# Use ImageNet pretrained weights
+parser.add_argument('--from-imagenet', dest='from_imagenet', action='store_true',
+                    help='use pre-trained ImageNet model')
+
 
 def main():
     # starting time:
@@ -192,7 +196,8 @@ def main_worker(gpu, ngpus_per_node, args, exp_output):
     print("=> creating model '{}'".format(args.arch))
     model = moco.builder.MoCo(
         models.__dict__[args.arch],
-        args.moco_dim, args.moco_k, args.moco_m, args.moco_t, args.mlp)
+        args.moco_dim, args.moco_k, args.moco_m, args.moco_t, args.mlp,
+        args.from_imagenet)
     print(model)
 
     if args.distributed:
