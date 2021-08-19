@@ -17,7 +17,7 @@ python3 /misc/student/alzouabk/Thesis/self_supervised_pretraining/moco/main_moco
   --exp 'no_mlp_bestAug_imagenet' \
   --epochs 100 \
   --print-freq 10 \
-  --arch resnet50 \
+  --arch resnet18 \
   --moco-dim 128 \
   --stack_pre_post True \
   --lr 0.00375 \
