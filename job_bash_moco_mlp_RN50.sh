@@ -22,7 +22,7 @@ python3 /misc/student/alzouabk/Thesis/self_supervised_pretraining/moco/main_moco
   --stack_pre_post True \
   --lr 0.01 \
   --batch-size 48 \
-  --dist-url 'tcp://localhost:10001' --multiprocessing-distributed --world-size 1 --rank 0 \
+  --dist-url 'tcp://localhost:10003' --multiprocessing-distributed --world-size 1 --rank 0 \
   --mlp \
   --moco-t 0.2 \
   --workers 8 \
