@@ -13,7 +13,7 @@ echo "pid, gpu_utilization [%], mem_utilization [%], max_memory_usage [MiB], tim
 nvidia-smi --query-accounted-apps="pid,gpu_util,mem_util,max_memory_usage,time" --format=csv | tail -n1
 
 echo 'Training Should start'
-python3 /misc/student/alzouabk/Thesis/self_supervised_pretraining/moco/main_lincls.py \
+CUDA_LAUNCH_BLOCKING=1 python3 /misc/student/alzouabk/Thesis/self_supervised_pretraining/moco/main_lincls.py \
   --exp 'imagenet_e2e_resnet18_256' \
   --epochs 40 \
   --e2e \
