@@ -1,6 +1,6 @@
 #PBS -N moco_mlp_RN50_0001
 #PBS -S /bin/bash
-#PBS -l nodes=1:ppn=4:gpus=2:nvidiaMin11GB,mem=16gb,walltime=24:00:00
+#PBS -l nodes=1:ppn=4:gpus=2:nvidiaMin12GB,mem=16gb,walltime=24:00:00
 #PBS -j oe
 #PBS -q student
 #PBS -o /misc/student/alzouabk/Thesis/self_supervised_pretraining/moco/moco_curves_2/
@@ -17,11 +17,11 @@ python3 /misc/student/alzouabk/Thesis/self_supervised_pretraining/moco/main_moco
   --exp 'mlp_RN50_0001' \
   --epochs 100 \
   --print-freq 10 \
-  --arch resnet18 \
+  --arch resnet50 \
   --moco-dim 128 \
   --stack_pre_post True \
   --lr 0.0001 \
-  --batch-size 48 \
+  --batch-size 42 \
   --dist-url 'tcp://localhost:10003' --multiprocessing-distributed --world-size 1 --rank 0 \
   --mlp \
   --moco-t 0.2 \
