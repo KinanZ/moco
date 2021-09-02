@@ -310,6 +310,7 @@ def main_worker(gpu, ngpus_per_node, args, exp_output):
     ED_axis = (1, 2)
 
     train_augmentation = transforms.Compose([
+        transforms.Resize(256, interpolation=transforms.InterpolationMode.BICUBIC),
         transforms.RandomApply([moco.loader.ElasticDeform(control_points_num=3, sigma=15, axis=ED_axis)], p=0),
         transforms.RandomAffine(45, translate=[0.2, 0.2], scale=[0.5, 1.5], shear=0.2),
         transforms.RandomApply([
@@ -320,6 +321,7 @@ def main_worker(gpu, ngpus_per_node, args, exp_output):
     ])
 
     valid_augmentation = transforms.Compose([
+        transforms.Resize(256, interpolation=transforms.InterpolationMode.BICUBIC),
         normalize
     ])
     train_dataset = brain_CT_scan(json_file=args.train_data, root_dir=args.images, transform=train_augmentation, stack_pre_post=args.stack_pre_post)
