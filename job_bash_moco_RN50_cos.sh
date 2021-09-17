@@ -2,7 +2,7 @@
 #PBS -S /bin/bash
 #PBS -l nodes=1:ppn=4:gpus=2:nvidiaMin12GB,mem=16gb,walltime=24:00:00
 #PBS -j oe
-#PBS -q student
+#PBS -q default-cpu
 #PBS -o /misc/student/alzouabk/Thesis/self_supervised_pretraining/moco/moco_curves_2/
 
 
