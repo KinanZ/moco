@@ -310,7 +310,7 @@ def main_worker(gpu, ngpus_per_node, args, exp_output):
     ED_axis = (1, 2)
 
     train_augmentation = transforms.Compose([
-        transforms.Resize(256, interpolation=transforms.InterpolationMode.BICUBIC),
+        #transforms.Resize(256, interpolation=transforms.InterpolationMode.BICUBIC),
         transforms.RandomApply([moco.loader.ElasticDeform(control_points_num=3, sigma=15, axis=ED_axis)], p=0),
         transforms.RandomAffine(45, translate=[0.2, 0.2], scale=[0.5, 1.5], shear=0.2),
         transforms.RandomApply([
@@ -321,7 +321,7 @@ def main_worker(gpu, ngpus_per_node, args, exp_output):
     ])
 
     valid_augmentation = transforms.Compose([
-        transforms.Resize(256, interpolation=transforms.InterpolationMode.BICUBIC),
+        #transforms.Resize(256, interpolation=transforms.InterpolationMode.BICUBIC),
         normalize
     ])
     train_dataset = brain_CT_scan(json_file=args.train_data, root_dir=args.images, transform=train_augmentation, stack_pre_post=args.stack_pre_post)
@@ -367,13 +367,13 @@ def main_worker(gpu, ngpus_per_node, args, exp_output):
 
         if not args.multiprocessing_distributed or (args.multiprocessing_distributed
                 and args.rank % ngpus_per_node == 0):
-            save_checkpoint({
+            '''save_checkpoint({
                 'epoch': epoch + 1,
                 'arch': args.arch,
                 'state_dict': model.state_dict(),
                 'best_acc1': best_acc1,
                 'optimizer' : optimizer.state_dict(),
-            }, is_best, filename=os.path.join(exp_output, 'best_model.pth.tar'))
+            }, is_best, filename=os.path.join(exp_output, 'best_model.pth.tar'))'''
             if epoch == args.start_epoch and not args.e2e:
                 print('sanity_check: ')
                 try:
