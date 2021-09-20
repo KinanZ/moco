@@ -43,7 +43,7 @@ parser.add_argument('--valid_data', default='/misc/lmbraid19/argusm/CLUSTER/mult
                     help='path to json file with test dataset information')
 parser.add_argument('--images', default='/misc/lmbraid19/argusm/CLUSTER/multimed/NSEG2015_2/JPEGImages/',
                     help='path to json file with dataset information')
-parser.add_argument('--output_dir', default='/misc/student/alzouabk/Thesis/self_supervised_pretraining/moco/outputs_lincls/',
+parser.add_argument('--output_dir', default='/misc/student/alzouabk/Thesis/self_supervised_pretraining/moco/outputs_lincls_2/',
                     help='path to output directory')
 parser.add_argument('-a', '--arch', metavar='ARCH', default='resnet50',
                     choices=model_names,
