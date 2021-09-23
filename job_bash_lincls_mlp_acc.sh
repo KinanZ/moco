@@ -1,4 +1,4 @@
-#PBS -N moco_lincl_RN18_001_acc
+#PBS -N moco_lincl_RN18_005625_acc
 #PBS -S /bin/bash
 #PBS -l nodes=1:ppn=4:gpus=2:nvidiaMin11GB,mem=16gb,walltime=24:00:00
 #PBS -j oe
@@ -14,13 +14,13 @@ nvidia-smi --query-accounted-apps="pid,gpu_util,mem_util,max_memory_usage,time" 
 
 echo 'Training Should start'
 python3 /misc/student/alzouabk/Thesis/self_supervised_pretraining/moco/main_lincls.py \
-  --exp 'moco_lincl_RN18_001_acc' \
+  --exp 'moco_lincl_RN18_005625_acc' \
   --epochs 40 \
   --print-freq 1 \
   --optimizer adam \
   --arch resnet18 \
   --lr 0.1 \
   --batch-size 48 \
-  --pretrained /misc/student/alzouabk/Thesis/self_supervised_pretraining/moco/outputs_2/RN18_001/best_model_acc.pth.tar \
+  --pretrained /misc/student/alzouabk/Thesis/self_supervised_pretraining/moco/outputs_2/RN18_005625/best_model_acc.pth.tar \
   --dist-url 'tcp://localhost:10001' --multiprocessing-distributed --world-size 1 --rank 0 \
   --workers 8 \
