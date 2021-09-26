@@ -19,7 +19,7 @@ python3 /misc/student/alzouabk/Thesis/self_supervised_pretraining/moco/main_linc
   --e2e \
   --optimizer adam \
   --print-freq 1 \
-  --arch resnet18 \
+  --arch resnet50 \
   --lr 0.001 \
   --batch-size 48 \
   --pretrained /misc/student/alzouabk/Thesis/self_supervised_pretraining/moco/outputs_2/mlp_RN50_0001/best_model_loss.pth.tar \
