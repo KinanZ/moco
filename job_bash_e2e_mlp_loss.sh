@@ -1,6 +1,6 @@
 #PBS -N moco_e2e_mlp_RN50_001_loss
 #PBS -S /bin/bash
-#PBS -l nodes=1:ppn=4:gpus=2:nvidiaMin12GB,mem=16gb,walltime=24:00:00
+#PBS -l nodes=1:ppn=4:gpus=2:nvidiaTITANV,mem=16gb,walltime=24:00:00
 #PBS -j oe
 #PBS -q student
 #PBS -o /misc/student/alzouabk/Thesis/self_supervised_pretraining/moco/outputs_lincls_2/

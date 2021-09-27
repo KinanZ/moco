@@ -22,6 +22,6 @@ python3 /misc/student/alzouabk/Thesis/self_supervised_pretraining/moco/main_linc
   --lr 0.1 \
   --batch-size 48 \
   --pretrained /misc/student/alzouabk/Thesis/self_supervised_pretraining/moco/outputs_2/RN50_001/best_model_loss.pth.tar \
-  --dist-url 'tcp://localhost:10002' --multiprocessing-distributed --world-size 1 --rank 0 \
+  --dist-url 'tcp://localhost:10006' --multiprocessing-distributed --world-size 1 --rank 0 \
   --workers 8 \
 
