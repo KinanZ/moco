@@ -1,4 +1,4 @@
-#PBS -N moco_lincl_RN50_005625_acc
+#PBS -N moco_lincl_RN50_01_acc
 #PBS -S /bin/bash
 #PBS -l nodes=1:ppn=4:gpus=2:nvidiaMin12GB,mem=16gb,walltime=24:00:00
 #PBS -j oe
@@ -21,6 +21,6 @@ python3 /misc/student/alzouabk/Thesis/self_supervised_pretraining/moco/main_linc
   --arch resnet50 \
   --lr 0.1 \
   --batch-size 48 \
-  --pretrained /misc/student/alzouabk/Thesis/self_supervised_pretraining/moco/outputs_2/RN50_005625/best_model_acc.pth.tar \
+  --pretrained /misc/student/alzouabk/Thesis/self_supervised_pretraining/moco/outputs_2/RN50_01/best_model_acc.pth.tar \
   --dist-url 'tcp://localhost:10005' --multiprocessing-distributed --world-size 1 --rank 0 \
   --workers 8 \

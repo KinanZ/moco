@@ -1,4 +1,4 @@
-#PBS -N moco_e2e_RN50_005625_loss
+#PBS -N moco_e2e_RN50_01_loss
 #PBS -S /bin/bash
 #PBS -l nodes=1:ppn=4:gpus=2:nvidiaMin12GB,mem=16gb,walltime=24:00:00
 #PBS -j oe
@@ -14,7 +14,7 @@ nvidia-smi --query-accounted-apps="pid,gpu_util,mem_util,max_memory_usage,time" 
 
 echo 'Training Should start'
 python3 /misc/student/alzouabk/Thesis/self_supervised_pretraining/moco/main_lincls.py \
-  --exp 'moco_e2e_RN50_005625_loss' \
+  --exp 'moco_e2e_RN50_01_loss' \
   --epochs 40 \
   --e2e \
   --optimizer adam \
@@ -22,7 +22,7 @@ python3 /misc/student/alzouabk/Thesis/self_supervised_pretraining/moco/main_linc
   --arch resnet50 \
   --lr 0.001 \
   --batch-size 46 \
-  --pretrained /misc/student/alzouabk/Thesis/self_supervised_pretraining/moco/outputs_2/RN50_005625/best_model_loss.pth.tar \
+  --pretrained /misc/student/alzouabk/Thesis/self_supervised_pretraining/moco/outputs_2/RN50_01/best_model_loss.pth.tar \
   --dist-url 'tcp://localhost:10008' --multiprocessing-distributed --world-size 1 --rank 0 \
   --workers 8 \
 
