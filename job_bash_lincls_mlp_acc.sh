@@ -1,6 +1,6 @@
 #PBS -N moco_lincl_mlp_RN50_cos_005625_acc_test
 #PBS -S /bin/bash
-#PBS -l nodes=1:ppn=6:gpus=1:ubuntu2004:nvidiaRTX3090,mem=16gb,walltime=24:00:00
+#PBS -l nodes=1:ppn=6:gpus=1:ubuntu2004:nvidiaP100,mem=16gb,walltime=24:00:00
 #PBS -j oe
 #PBS -o /misc/student/alzouabk/Thesis/self_supervised_pretraining/moco/outputs_lincls_2/
 
