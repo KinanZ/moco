@@ -1,6 +1,6 @@
-#PBS -N imagenet_e2e_resnet50
+#PBS -N imagenet_lincl_resnet18
 #PBS -S /bin/bash
-#PBS -l nodes=1:ppn=4:gpus=2:nvidiaMin12GB,mem=16gb,walltime=24:00:00
+#PBS -l nodes=1:ppn=8:gpus=2:nvidiaMin11GB,mem=16gb,walltime=24:00:00
 #PBS -j oe
 #PBS -o /misc/student/alzouabk/Thesis/self_supervised_pretraining/moco/outputs_lincls_2/
 
@@ -12,15 +12,14 @@ echo "pid, gpu_utilization [%], mem_utilization [%], max_memory_usage [MiB], tim
 nvidia-smi --query-accounted-apps="pid,gpu_util,mem_util,max_memory_usage,time" --format=csv | tail -n1
 
 echo 'Training Should start'
-CUDA_LAUNCH_BLOCKING=1 python3 /misc/student/alzouabk/Thesis/self_supervised_pretraining/moco/main_lincls.py \
-  --exp 'imagenet_e2e_resnet50' \
+python3 /misc/student/alzouabk/Thesis/self_supervised_pretraining/moco/main_lincls.py \
+  --exp 'imagenet_lincl_resnet18' \
   --epochs 40 \
-  --e2e \
-  --optimizer adam \
   --print-freq 1 \
-  --arch resnet50 \
-  --lr 0.001 \
-  --batch-size 46 \
+  --optimizer adam \
+  --arch resnet18 \
+  --lr 0.1 \
+  --batch-size 48 \
   --from_imagenet \
-  --dist-url 'tcp://localhost:10003' --multiprocessing-distributed --world-size 1 --rank 0 \
+  --dist-url 'tcp://localhost:10002' --multiprocessing-distributed --world-size 1 --rank 0 \
   --workers 8 \

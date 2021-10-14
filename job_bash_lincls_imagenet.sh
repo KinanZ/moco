@@ -1,9 +1,8 @@
-#PBS -N imagenet_lincl_resnet50_2
+#PBS -N imagenet_lincl_resnet50
 #PBS -S /bin/bash
 #PBS -l nodes=1:ppn=8:gpus=2:nvidiaMin11GB,mem=16gb,walltime=24:00:00
 #PBS -j oe
-#PBS -q student
-#PBS -o /misc/student/alzouabk/Thesis/self_supervised_pretraining/moco/outputs_lincls/
+#PBS -o /misc/student/alzouabk/Thesis/self_supervised_pretraining/moco/outputs_lincls_2/
 
 
 homePath='/misc/student/alzouabk/miniconda3'
@@ -14,9 +13,10 @@ nvidia-smi --query-accounted-apps="pid,gpu_util,mem_util,max_memory_usage,time" 
 
 echo 'Training Should start'
 python3 /misc/student/alzouabk/Thesis/self_supervised_pretraining/moco/main_lincls.py \
-  --exp 'imagenet_lincl_resnet50_2' \
+  --exp 'imagenet_lincl_resnet50' \
   --epochs 40 \
   --print-freq 1 \
+  --optimizer adam \
   --arch resnet50 \
   --lr 0.1 \
   --batch-size 48 \
