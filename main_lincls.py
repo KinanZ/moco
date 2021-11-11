@@ -106,9 +106,9 @@ parser.add_argument('--pretrained', default='', type=str,
                     help='path to moco pretrained checkpoint')
 
 # Use Augmentations
-parser.add_argument('--elastic-cp', default=0.0, type=float,
+parser.add_argument('--elastic-cp', default=3, type=int,
                     help='number of control points for elastic deformation')
-parser.add_argument('--elastic-sigma', default=0.0, type=float,
+parser.add_argument('--elastic-sigma', default=15, type=int,
                     help='sigma for elastic deformation')
 parser.add_argument('--elastic-p', default=0.0, type=float,
                     help='probability of using elastic deformation')
