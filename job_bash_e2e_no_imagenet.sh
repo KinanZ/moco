@@ -1,9 +1,8 @@
-#PBS -N imagenet_lincl_resnet50_2
+#PBS -N no_aug_no_imagenet
 #PBS -S /bin/bash
-#PBS -l nodes=1:ppn=8:gpus=2:nvidiaMin11GB,mem=16gb,walltime=24:00:00
+#PBS -l nodes=1:ppn=4:gpus=1:ubuntu2004:nvidiaGTX1080Ti,mem=8gb,walltime=24:00:00
 #PBS -j oe
-#PBS -q student
-#PBS -o /misc/student/alzouabk/Thesis/self_supervised_pretraining/moco/outputs_lincls/
+#PBS -o /misc/student/alzouabk/Thesis/self_supervised_pretraining/moco/outputs_lincls_aug/
 
 
 homePath='/misc/student/alzouabk/miniconda3'
@@ -14,12 +13,14 @@ nvidia-smi --query-accounted-apps="pid,gpu_util,mem_util,max_memory_usage,time" 
 
 echo 'Training Should start'
 python3 /misc/student/alzouabk/Thesis/self_supervised_pretraining/moco/main_lincls.py \
-  --exp 'imagenet_lincl_resnet50_2' \
+  --exp 'no_aug_no_imagenet' \
+  --output_dir='/misc/student/alzouabk/Thesis/self_supervised_pretraining/moco/outputs_lincls_aug/' \
   --epochs 40 \
+  --e2e \
+  --optimizer adam \
   --print-freq 1 \
-  --arch resnet50 \
-  --lr 0.1 \
-  --batch-size 48 \
-  --from_imagenet \
+  --arch resnet18 \
+  --lr 0.001 \
+  --batch-size 16 \
   --dist-url 'tcp://localhost:10001' --multiprocessing-distributed --world-size 1 --rank 0 \
   --workers 8 \

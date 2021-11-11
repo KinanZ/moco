@@ -43,7 +43,7 @@ parser.add_argument('--valid_data', default='/misc/lmbraid19/argusm/CLUSTER/mult
                     help='path to json file with test dataset information')
 parser.add_argument('--images', default='/misc/lmbraid19/argusm/CLUSTER/multimed/NSEG2015_2/JPEGImages/',
                     help='path to json file with dataset information')
-parser.add_argument('--output_dir', default='/misc/student/alzouabk/Thesis/self_supervised_pretraining/moco/outputs_lincls/',
+parser.add_argument('--output_dir', default='/misc/student/alzouabk/Thesis/self_supervised_pretraining/moco/outputs_lincls_2/',
                     help='path to output directory')
 parser.add_argument('-a', '--arch', metavar='ARCH', default='resnet50',
                     choices=model_names,
@@ -52,7 +52,7 @@ parser.add_argument('-a', '--arch', metavar='ARCH', default='resnet50',
                         ' (default: resnet50)')
 parser.add_argument('--num_classes', default=15, type=int,
                     help='number of categories in the dataset')
-parser.add_argument('--stack_pre_post', default=True, type=bool,
+parser.add_argument('--stack_pre_post', action='store_true',
                     help='if True -> the previous and post slices are stacked to the main slice and become a 3-channel input for the model.')
 parser.add_argument('--e2e', action='store_true',
                     help='finetune the whole model instead of just fc')
@@ -105,9 +105,31 @@ parser.add_argument('--multiprocessing-distributed', action='store_true',
 parser.add_argument('--pretrained', default='', type=str,
                     help='path to moco pretrained checkpoint')
 
-# Use Gaussian blur probability in Augmentations
-parser.add_argument('--gbp', default=0.0, type=float,
+# Use Augmentations
+parser.add_argument('--elastic-cp', default=0.0, type=float,
+                    help='number of control points for elastic deformation')
+parser.add_argument('--elastic-sigma', default=0.0, type=float,
+                    help='sigma for elastic deformation')
+parser.add_argument('--elastic-p', default=0.0, type=float,
+                    help='probability of using elastic deformation')
+parser.add_argument('--affine-rot', default=0.0, type=float,
+                    help='rotation range for affine')
+parser.add_argument('--affine-trans', default=0.0, type=float,
+                    help='trans range for affine')
+parser.add_argument('--affine-s-min', default=0.0, type=float,
+                    help='min thresh for scaling in affine')
+parser.add_argument('--affine-s-max', default=0.0, type=float,
+                    help='max thresh for scaling in affine')
+parser.add_argument('--affine-shear', default=0.0, type=float,
+                    help='shear range for affine')
+parser.add_argument('--affine-p', default=0.0, type=float,
+                    help='probability of using affine')
+parser.add_argument('--gb-p', default=0.0, type=float,
                     help='probability of using Gaussian blur')
+parser.add_argument('--RHF-p', default=0.0, type=float,
+                    help='probability of using RHF')
+parser.add_argument('--bbox-aug', default=0.0, type=float,
+                    help='probability of using bbox aug')
 
 # Use ImageNet pretrained weights
 parser.add_argument('--from_imagenet', action='store_true',
@@ -310,22 +332,24 @@ def main_worker(gpu, ngpus_per_node, args, exp_output):
     ED_axis = (1, 2)
 
     train_augmentation = transforms.Compose([
-        transforms.Resize(256, interpolation=transforms.InterpolationMode.BICUBIC),
-        transforms.RandomApply([moco.loader.ElasticDeform(control_points_num=3, sigma=15, axis=ED_axis)], p=0),
-        transforms.RandomAffine(45, translate=[0.2, 0.2], scale=[0.5, 1.5], shear=0.2),
+        transforms.RandomApply([
+            moco.loader.ElasticDeform(control_points_num=args.elastic_cp, sigma=args.elastic_sigma, axis=ED_axis)]
+            , p=args.ealstic_p),
+        transforms.RandomApply([
+            transforms.RandomAffine(args.affine_rot, translate=[args.affine_trans, args.affine_trans], scale=[args.affine_s_min, args.affine_s_max], shear=args.affine_shear)
+             ], p=args.affine_p),
         transforms.RandomApply([
             transforms.GaussianBlur(kernel_size=[5, 5], sigma=[.1, 2.])
-        ], p=args.gbp),
-        transforms.RandomHorizontalFlip(),
+        ], p=args.gb_p),
+        transforms.RandomApply([transforms.RandomHorizontalFlip()], p=args.RHF_p),
         normalize
     ])
 
     valid_augmentation = transforms.Compose([
-        transforms.Resize(256, interpolation=transforms.InterpolationMode.BICUBIC),
         normalize
     ])
-    train_dataset = brain_CT_scan(json_file=args.train_data, root_dir=args.images, transform=train_augmentation, stack_pre_post=args.stack_pre_post)
-    valid_dataset = brain_CT_scan(json_file=args.valid_data, root_dir=args.images, transform=valid_augmentation, stack_pre_post=args.stack_pre_post)
+    train_dataset = brain_CT_scan(json_file=args.train_data, root_dir=args.images, transform=train_augmentation, stack_pre_post=args.stack_pre_post, bbox_aug=args.bbox_aug)
+    valid_dataset = brain_CT_scan(json_file=args.valid_data, root_dir=args.images, transform=valid_augmentation, stack_pre_post=args.stack_pre_post, bbox_aug=False)
 
     if args.distributed:
         train_sampler = torch.utils.data.distributed.DistributedSampler(train_dataset)
@@ -367,13 +391,13 @@ def main_worker(gpu, ngpus_per_node, args, exp_output):
 
         if not args.multiprocessing_distributed or (args.multiprocessing_distributed
                 and args.rank % ngpus_per_node == 0):
-            save_checkpoint({
+            '''save_checkpoint({
                 'epoch': epoch + 1,
                 'arch': args.arch,
                 'state_dict': model.state_dict(),
                 'best_acc1': best_acc1,
                 'optimizer' : optimizer.state_dict(),
-            }, is_best, filename=os.path.join(exp_output, 'best_model.pth.tar'))
+            }, is_best, filename=os.path.join(exp_output, 'best_model.pth.tar'))'''
             if epoch == args.start_epoch and not args.e2e:
                 print('sanity_check: ')
                 try:
