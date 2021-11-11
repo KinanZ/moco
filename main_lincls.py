@@ -116,9 +116,9 @@ parser.add_argument('--affine-rot', default=0.0, type=float,
                     help='rotation range for affine')
 parser.add_argument('--affine-trans', default=0.0, type=float,
                     help='trans range for affine')
-parser.add_argument('--affine-s-min', default=0.0, type=float,
+parser.add_argument('--affine-s-min', default=0.1, type=float,
                     help='min thresh for scaling in affine')
-parser.add_argument('--affine-s-max', default=0.0, type=float,
+parser.add_argument('--affine-s-max', default=0.5, type=float,
                     help='max thresh for scaling in affine')
 parser.add_argument('--affine-shear', default=0.0, type=float,
                     help='shear range for affine')
