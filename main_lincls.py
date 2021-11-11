@@ -114,13 +114,11 @@ parser.add_argument('--elastic-p', default=0.0, type=float,
                     help='probability of using elastic deformation')
 parser.add_argument('--affine-rot', default=0.0, type=float,
                     help='rotation range for affine')
-parser.add_argument('--affine-trans', default=0.0, type=float,
+parser.add_argument('--affine-trans', default=None, type=float,
                     help='trans range for affine')
-parser.add_argument('--affine-s-min', default=0.1, type=float,
+parser.add_argument('--affine-scale', default=None, type=tuple,
                     help='min thresh for scaling in affine')
-parser.add_argument('--affine-s-max', default=0.5, type=float,
-                    help='max thresh for scaling in affine')
-parser.add_argument('--affine-shear', default=0.0, type=float,
+parser.add_argument('--affine-shear', default=None, type=float,
                     help='shear range for affine')
 parser.add_argument('--affine-p', default=0.0, type=float,
                     help='probability of using affine')
@@ -128,8 +126,8 @@ parser.add_argument('--gb-p', default=0.0, type=float,
                     help='probability of using Gaussian blur')
 parser.add_argument('--RHF-p', default=0.0, type=float,
                     help='probability of using RHF')
-parser.add_argument('--bbox-aug', default=0.0, type=float,
-                    help='probability of using bbox aug')
+parser.add_argument('--bbox-aug', action='store_true',
+                    help='using bbox aug')
 
 # Use ImageNet pretrained weights
 parser.add_argument('--from_imagenet', action='store_true',
@@ -341,7 +339,7 @@ def main_worker(gpu, ngpus_per_node, args, exp_output):
         transforms.RandomApply([
             transforms.GaussianBlur(kernel_size=[5, 5], sigma=[.1, 2.])
         ], p=args.gb_p),
-        transforms.RandomApply([transforms.RandomHorizontalFlip()], p=args.RHF_p),
+        transforms.RandomHorizontalFlip(args.RHF_p),
         normalize
     ])
 

@@ -1,4 +1,4 @@
-#PBS -N no_aug_imagenet_again
+#PBS -N no_aug_imagenet_HF_rot
 #PBS -S /bin/bash
 #PBS -l nodes=1:ppn=4:gpus=1:ubuntu2004:nvidiaGTX1080Ti,mem=8gb,walltime=24:00:00
 #PBS -j oe
@@ -13,7 +13,7 @@ nvidia-smi --query-accounted-apps="pid,gpu_util,mem_util,max_memory_usage,time" 
 
 echo 'Training Should start'
 python3 /misc/student/alzouabk/Thesis/self_supervised_pretraining/moco/main_lincls.py \
-  --exp 'no_aug_imagenet_again' \
+  --exp 'no_aug_imagenet_HF_rot' \
   --output_dir='/misc/student/alzouabk/Thesis/self_supervised_pretraining/moco/outputs_lincls_aug/' \
   --epochs 40 \
   --e2e \
@@ -23,5 +23,8 @@ python3 /misc/student/alzouabk/Thesis/self_supervised_pretraining/moco/main_linc
   --from_imagenet \
   --lr 0.001 \
   --batch-size 16 \
-  --dist-url 'tcp://localhost:10001' --multiprocessing-distributed --world-size 1 --rank 0 \
+  --RHF-p=0.5 \
+  --affine-rot=45 \
+  --affine-p=1.0 \
+  --dist-url 'tcp://localhost:10003' --multiprocessing-distributed --world-size 1 --rank 0 \
   --workers 8 \
