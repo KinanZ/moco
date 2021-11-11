@@ -334,7 +334,7 @@ def main_worker(gpu, ngpus_per_node, args, exp_output):
     train_augmentation = transforms.Compose([
         transforms.RandomApply([
             moco.loader.ElasticDeform(control_points_num=args.elastic_cp, sigma=args.elastic_sigma, axis=ED_axis)]
-            , p=args.ealstic_p),
+            , p=args.elastic_p),
         transforms.RandomApply([
             transforms.RandomAffine(args.affine_rot, translate=[args.affine_trans, args.affine_trans], scale=[args.affine_s_min, args.affine_s_max], shear=args.affine_shear)
              ], p=args.affine_p),
