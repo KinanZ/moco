@@ -114,7 +114,7 @@ parser.add_argument('--elastic-p', default=0.0, type=float,
                     help='probability of using elastic deformation')
 parser.add_argument('--affine-rot', default=0.0, type=float,
                     help='rotation range for affine')
-parser.add_argument('--affine-trans', default=None, type=float,
+parser.add_argument('--affine-trans', default=None, type=tuple,
                     help='trans range for affine')
 parser.add_argument('--affine-scale', default=None, type=tuple,
                     help='min thresh for scaling in affine')
@@ -334,7 +334,7 @@ def main_worker(gpu, ngpus_per_node, args, exp_output):
             moco.loader.ElasticDeform(control_points_num=args.elastic_cp, sigma=args.elastic_sigma, axis=ED_axis)]
             , p=args.elastic_p),
         transforms.RandomApply([
-            transforms.RandomAffine(args.affine_rot, translate=[args.affine_trans, args.affine_trans], scale=[args.affine_s_min, args.affine_s_max], shear=args.affine_shear)
+            transforms.RandomAffine(args.affine_rot, translate=args.affine_trans, scale=args.affine_scale, shear=args.affine_shear)
              ], p=args.affine_p),
         transforms.RandomApply([
             transforms.GaussianBlur(kernel_size=[5, 5], sigma=[.1, 2.])
