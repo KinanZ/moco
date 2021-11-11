@@ -25,7 +25,7 @@ python3 /misc/student/alzouabk/Thesis/self_supervised_pretraining/moco/main_linc
   --batch-size 16 \
   --RHF-p=0.5 \
   --affine-rot=45 \
-  --affine-trans=[0.1,0.2] \
+  --affine-trans 0.1 0.2 \
   --affine-p=1.0 \
   --dist-url 'tcp://localhost:10009' --multiprocessing-distributed --world-size 1 --rank 0 \
   --workers 8 \

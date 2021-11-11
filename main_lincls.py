@@ -114,9 +114,9 @@ parser.add_argument('--elastic-p', default=0.0, type=float,
                     help='probability of using elastic deformation')
 parser.add_argument('--affine-rot', default=0.0, type=float,
                     help='rotation range for affine')
-parser.add_argument('--affine-trans', default=None, type=tuple,
+parser.add_argument('--affine-trans', default=None, nargs='+', type=float,
                     help='trans range for affine')
-parser.add_argument('--affine-scale', default=None, type=tuple,
+parser.add_argument('--affine-scale', default=None, nargs='+', type=float,
                     help='min thresh for scaling in affine')
 parser.add_argument('--affine-shear', default=None, type=float,
                     help='shear range for affine')
@@ -329,6 +329,10 @@ def main_worker(gpu, ngpus_per_node, args, exp_output):
     normalize = transforms.Normalize(mean=[0.184, 0.184, 0.184], std=[0.055, 0.055, 0.055])
     ED_axis = (1, 2)
 
+    if args.affine_trans is not None:
+        args.affine_trans = tuple(args.affine_trans)
+    if args.affine_scale is not None:
+        args.affine_scale = tuple(args.affine_scale)
     train_augmentation = transforms.Compose([
         transforms.RandomApply([
             moco.loader.ElasticDeform(control_points_num=args.elastic_cp, sigma=args.elastic_sigma, axis=ED_axis)]
