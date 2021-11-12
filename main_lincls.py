@@ -126,6 +126,10 @@ parser.add_argument('--gb-p', default=0.0, type=float,
                     help='probability of using Gaussian blur')
 parser.add_argument('--RHF-p', default=0.0, type=float,
                     help='probability of using RHF')
+parser.add_argument('--RRC-scale', default=None, nargs='+', type=float,
+                    help='scale for RRC')
+parser.add_argument('--RRC-p', default=0.0, type=float,
+                    help='probability for RRC')
 parser.add_argument('--bbox-aug', action='store_true',
                     help='using bbox aug')
 
@@ -337,6 +341,9 @@ def main_worker(gpu, ngpus_per_node, args, exp_output):
         transforms.RandomApply([
             moco.loader.ElasticDeform(control_points_num=args.elastic_cp, sigma=args.elastic_sigma, axis=ED_axis)]
             , p=args.elastic_p),
+        transforms.RandomApply([
+            transforms.RandomResizedCrop(512, scale=args.RRC_scale)]
+            , p=args.RRC_p),
         transforms.RandomApply([
             transforms.RandomAffine(args.affine_rot, translate=args.affine_trans, scale=args.affine_scale, shear=args.affine_shear)
              ], p=args.affine_p),
